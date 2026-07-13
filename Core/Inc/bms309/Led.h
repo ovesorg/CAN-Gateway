@@ -1,0 +1,24 @@
+#ifndef __LED_H
+#define __LED_H
+
+#define IO_LED1		//P2_0
+#define IO_LED2		//P2_1
+#define IO_LED3		//P2_2
+#define IO_LED4		//P2_3
+#define IO_LED5		//P2_4
+
+//#define LEDOn5()	IO_LED1=0; IO_LED2=0; IO_LED3=0; IO_LED4=0; IO_LED5=0;
+//#define LEDOn4()	IO_LED1=0; IO_LED2=0; IO_LED3=0; IO_LED4=0; IO_LED5=1;
+//#define LEDOn3()	IO_LED1=0; IO_LED2=0; IO_LED3=0; IO_LED4=1; IO_LED5=1;
+//#define LEDOn2()	IO_LED1=0; IO_LED2=0; IO_LED3=1; IO_LED4=1; IO_LED5=1;
+//#define LEDOn1()	IO_LED1=0; IO_LED2=1; IO_LED3=1; IO_LED4=1; IO_LED5=1;
+//#define LEDOff()	IO_LED1=1; IO_LED2=1; IO_LED3=1; IO_LED4=1; IO_LED5=1;
+
+#define LEDOn5()	;//IO_LED1=1; IO_LED2=1; IO_LED3=1; IO_LED4=1; IO_LED5=1;
+#define LEDOn4()	;//IO_LED1=1; IO_LED2=1; IO_LED3=1; IO_LED4=1; IO_LED5=0;
+#define LEDOn3()	;;//IO_LED1=1; IO_LED2=1; IO_LED3=1; IO_LED4=0; IO_LED5=0;
+#define LEDOn2()	;//IO_LED1=1; IO_LED2=1; IO_LED3=0; IO_LED4=0; IO_LED5=0;
+#define LEDOn1()	;//IO_LED1=1; IO_LED2=0; IO_LED3=0; IO_LED4=0; IO_LED5=0;
+#define LEDOff()	;//IO_LED1=0; IO_LED2=0; IO_LED3=0; IO_LED4=0; IO_LED5=0;
+
+#endif

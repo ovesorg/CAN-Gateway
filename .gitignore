@@ -1,0 +1,53 @@
+# ==========================================
+# Keil / MDK-ARM Build Artifacts
+# ==========================================
+*.o
+*.d
+*.crf
+*.axf
+*.dep
+*.lnp
+*.map
+*.lst
+*.build_log.htm
+*.htm
+*.iex
+
+# Build output directories
+Template/Keil5_project/output/
+Template/Keil5_project/output_Iap/
+Template/Keil5_project/list/
+
+# ==========================================
+# Keil Project User-Specific Files
+# ==========================================
+*.uvoptx
+*.uvguix.*
+*.scvd
+*.bak
+*.Bak
+
+# JLink
+JLinkLog.txt
+JLinkSettings.ini
+
+# ==========================================
+# IDE / Editor
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*~
+
+# ==========================================
+# WorkBuddy / CodeBuddy
+# ==========================================
+.codebuddy/
+.workbuddy/
+
+# ==========================================
+# OS Files
+# ==========================================
+Thumbs.db
+desktop.ini
+.DS_Store
