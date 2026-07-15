@@ -337,9 +337,9 @@ void Can1RxProc(can_receive_message_struct* rx_message) //BMS
 					g_CanTransmitState.can1_count++;
 				
 				
-				if((rx_message->rx_efid== 0x1806E5F4)||(rx_message->rx_efid== 0x1806E612 ))
+				if((rx_message->rx_efid== 0x1806E5F4)||(rx_message->rx_efid== 0x1806E612 )||(rx_message->rx_efid == 0x18FF50E6))
 				{
-						CanBmsParse(rx_message->rx_efid,rx_message->rx_data,rx_message->rx_dlen);
+					CanBmsParse(rx_message->rx_efid,rx_message->rx_data,rx_message->rx_dlen);
 				}
 				HAL_GPIO_WritePin(CAN2LED_GPIO_Port,CAN2LED_Pin,RESET);
 				
@@ -381,7 +381,6 @@ void CanMcuParse(uint32_t id,uint8_t *data,uint8_t len) //vcu
 			break;
 		
 	}
-
 }
 
 void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len) //bms
@@ -392,10 +391,10 @@ void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len) //bms
 			memcpy((uint8_t*)&g_BmsSysInfor,data,len);
 			BmsSysInforEvent=TRUE;
 			break;
-//		case 0x01806E610:
-//			memcpy((uint8_t*)&g_BmsRtStatus1,data,len);
-//			BmsRtState1Event=TRUE;
-//			break;
+		case 0x18FF50E6:   //实时温度与输入电压
+			memcpy((uint8_t*)&g_BmsRtStatus1,data,len);
+			BmsRtState1Event=TRUE;
+			break;
 		case 0x01806E611:
 			memcpy((uint8_t*)&g_BmsRtStatus2,data,len);
 			BmsRtState2Event=TRUE;
@@ -498,9 +497,10 @@ void Can1Transmit(can_trasnmit_message_struct *transmit_message)
 
 
 uint8_t watchdog_flag = 0,pag_watchcount=0; 
-
+uint32_t  bat_rcap = 0;
 uint8_t pag_watchwdg = 0;  // 0xaa
 
+static uint32_t  CcsEnergyLimitReached = 0;	
 static uint32_t g_CcsEnergyLimittime = 10000,energy_mWh = 0;  //设置的充电时间 单位S 
 
 void clear_pag_watchwdg(void)
@@ -512,14 +512,22 @@ void clear_pag_watchwdg(void)
 void set_CcsEnergyLimittime(uint32_t value)
 {
 	g_CcsEnergyLimittime = value;
+	CcsEnergyLimitReached = 0;
 //	save_time= value;
 }
 
 
 void set_CcsEnergy_mWh(uint32_t value)
 {
-	energy_mWh = 0;
+	energy_mWh = value;
+	CcsEnergyLimitReached = 0;
 }
+
+uint32_t get_bat_rcap_mWh(void)
+{
+	return bat_rcap;
+}
+
 
 
 
@@ -529,13 +537,13 @@ void CanProc(void)
 	static uint16_t temp16=0,tempbms_cur=0,tempbms_vol=0,tempvcu_cur=0,tempvcu_vol=0,count=0;
 	static uint16_t AlarmWatchdogState=0,AlarmWatchdogState_blk=0,pag_count =0;
 	uint32_t temp32;
-    int16_t tempInt16;
+    int16_t tempInt16,g_AC_ccsinput = 0,ccsvcu_cur = 0;
 	uint8_t serial_high_cache[8];
 	uint8_t serial_low_cache[8];
 	uint8_t ppid[15];
 	static uint64_t g_CcsEnergyLimittime_count = 0;
 
-	static uint32_t  bat_rcap =0,CcsEnergyLimitReached = 0;	
+	
 //	uint8_t *p_u8;
 //	uint32_t power;
 
@@ -572,7 +580,7 @@ void CanProc(void)
 		//HAL_Delay(2);
 		
 		count++;
-		if(count >=150)
+		if(count >=200)
 		{
 			count = 0;
 			if(tempvcu_cur >0)
@@ -621,7 +629,36 @@ void CanProc(void)
 			else
 			{
 				
+				if(g_AC_ccsinput > 2100) 
+				{
+					ccsvcu_cur += 100;
+					if(ccsvcu_cur > (tempbms_cur*0.95))
+					ccsvcu_cur = tempbms_cur*0.95;
+				}
+				else if(g_AC_ccsinput > 2000) 
+				{
+					//if((g_Battcharge_cur*X2) > dc_charge_cur)
+					//dc_charge_cur += 50;
+					ccsvcu_cur = tempbms_cur*0.5;
+				}
+				else if(g_AC_ccsinput > 1900) 
+				{
+					//if(((g_Battcharge_cur*X2) > dc_charge_cur)&&(dc_charge_cur > 20))
+					//dc_charge_cur -= 20;
+					ccsvcu_cur = tempbms_cur*0.2;
+				}
+				else ccsvcu_cur  = 0;
+				
+				
 				tempbms_cur =tempbms_cur / 4;
+				
+				if(CcsEnergyLimitReached ==1)
+				{
+					tempbms_cur = 0;
+					ccsvcu_cur = 200;
+				}
+				
+				
 				g_can0TxMessage_bms.tx_sfid = 0x00;
 				g_can0TxMessage_bms.tx_efid = 0x1806e640;
 				g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
@@ -640,7 +677,10 @@ void CanProc(void)
 				
 			//	g_can0TxMessage_bms.tx_efid = 0x1806E5F4;
 			////can_message_transmit(CAN1, &g_can0TxMessage_bms);//to vcu dispaly
-				LogPrintf("-2222 %d  %d-can0 %x\r\n",tempbms_cur,tempbms_vol,g_can0TxMessage_bms.tx_efid);
+				LogPrintf("-2222 %d  %d-g_AC_ccsinput %d  ccsvcu_cur %d\r\n",tempbms_cur,tempbms_vol,g_AC_ccsinput,ccsvcu_cur);
+				if(energy_mWh > 0)
+					LogPrintf("-2222 bat_rcap %d  energy_mWh %d- g_UserSet.lowbat %d \r\n",bat_rcap , energy_mWh, g_UserSet.lowbat);
+					
 			}
 			
 			//HAL_Delay(2);
@@ -766,16 +806,30 @@ void CanProc(void)
 		tempbms_cur = (g_Bms_Charge.chargeCurtLimitH<<8)|g_Bms_Charge.chargeCurtLimitL;
 		tempbms_vol = (g_Bms_Charge.chargeVolLimitH<<8)|g_Bms_Charge.chargeVolLimitL;	
 		
-		 LogPrintf("-1111can cur %x-can0 %x\r\n",tempbms_cur,tempbms_vol);
+		// LogPrintf("-1111can cur %x-can0 %x\r\n",tempbms_cur,tempbms_vol);
 	}
 	
-	if(McuCCSEvent)
+	if(McuCCSEvent)  // vcu XIA FA 
 	{
 		McuCCSEvent=FALSE;
 		tempvcu_cur = (g_McuCCSOut.chargeCurtLimitH<<8)|g_McuCCSOut.chargeCurtLimitL;
 		tempvcu_vol = (g_McuCCSOut.chargeVolLimitH<<8) |g_McuCCSOut.chargeVolLimitL;
 	}
+	else
+	{
+		
 	
+	}
+	
+	
+	
+	if(BmsRtState1Event)
+	{
+		BmsRtState1Event=FALSE;
+		g_AC_ccsinput = (g_BmsRtStatus1.acinputh<<8) |g_BmsRtStatus1.acinputl ;
+		
+		
+	}
 
     g_CcsEnergyLimittime_count = g_UserSet.time*1000*60 ;
 	if (g_CcsEnergyLimittime > 0 &&  ((HAL_GetTick() - g_CcsEnergyLimittime) > (g_CcsEnergyLimittime_count)))  // 设置时间计算 分钟为单位- g_UserSet.time_blk
@@ -787,7 +841,23 @@ void CanProc(void)
 
 	bat_rcap = (g_BmsRtStatus3.RemainBatCapH<<8)|(g_BmsRtStatus3.RemainBatCapL);
 	
+	
+	if((energy_mWh>0)&&(bat_rcap - energy_mWh>= g_UserSet.lowbat*0.9))
+	{
+		energy_mWh = 0;
+		CcsEnergyLimitReached = 1;
+	}
+	
 	return ;
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	#else
     if(HAL_GetTick()-g_CanTransmitState.t1000ms>=100)
@@ -895,6 +965,8 @@ void CanProc(void)
 		temp16=(g_McuSysInfor2.MaxInputCurtSetH<<8)|g_McuSysInfor2.MaxInputCurtSetL;
 		GattSetData(LIST_DTA,DTA_CMXC,(uint8_t*)&temp16);
 	}
+	
+	
 
 //	if(BmsRtState1Event)
 //	{

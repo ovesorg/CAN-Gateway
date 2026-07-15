@@ -255,7 +255,7 @@ void BleDataReprot(uint8_t cmd )
 			break;
 		case BLE_CMD_SWCH:
 			ack=TRUE;
-			memcpy(buffer,(uint8_t*)&g_GattMem[MEM_ADDR_GCTW],MEM_SIZE_GCTW);
+			memcpy(buffer,(uint8_t*)&g_GattMem[MEM_ADDR_SWCH],MEM_SIZE_SWCH);
 			size=MEM_SIZE_SWCH;
 			break;
 		case BLE_CMD_READ:
@@ -1845,7 +1845,7 @@ void BleCmdProc(void)
 						break;
 					
 					case BLE_CMD_SWCH:
-						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_GCTW],buffer,MEM_SIZE_GCTW);
+						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_SWCH],buffer,MEM_SIZE_SWCH);
 						GattGetData( LIST_CMD, CMD_GCTW, (uint8_t*)&temp16);
 						g_UserSet.time=temp16;
 						set_CcsEnergyLimittime(HAL_GetTick());
@@ -1867,8 +1867,8 @@ void BleCmdProc(void)
 						case BLE_CMD_RAML:
 						 memcpy((uint8_t*)&g_GattMem[MEM_ADDR_RAML],buffer,MEM_SIZE_RAML);
 						 GattGetData( LIST_CMD, CMD_RAML, (uint8_t*)&temp16);
-						 g_UserSet.lowbat=temp16;
-						 set_CcsEnergy_mWh(g_UserSet.lowbat);
+						 g_UserSet.lowbat = temp16;
+						 set_CcsEnergy_mWh(get_bat_rcap_mWh());
 						 printf("temp power= %d\n", g_UserSet.lowbat);
 					
 						break;	

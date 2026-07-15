@@ -167,7 +167,7 @@ typedef struct
 
 typedef struct
 {
-
+/*
 	uint8_t PackOpenload:1;
 	uint8_t DischrgShortLoad:1;
 	uint8_t ChrgOverTempProtect:1;
@@ -187,13 +187,13 @@ typedef struct
 	uint8_t DischrgOverCurrentProtect:1;
 	uint8_t DischrgOverTempProtect:1;
 	uint8_t DischrgLowTempProtect:1;
-	
+	*/
 
-	uint8_t RealtimeCurrentH;
-	uint8_t RealtimeCurrentL;
+	uint8_t temp1;
+	uint8_t temp2;
 
-	uint8_t RealtimeVoltageH;
-	uint8_t RealtimeVoltageL;
+	uint8_t acinputh;
+	uint8_t acinputl;
 
 	uint8_t PackMaxTemp;
 	uint8_t PackMinTemp;
@@ -480,7 +480,7 @@ enum
 #define McuSysInfor1Event     g_CanMcuEvent.BIT.B3
 #define McuSysInfor2Event     g_CanMcuEvent.BIT.B4
 #define McuCCSEvent     g_CanMcuEvent.BIT.B5
-
+#define BmsRtState1Event	g_CanMcuEvent.BIT.B6
 
 #define BmsRtChangEvent      g_CanBmsEvent.BIT.B0
 #define BmsRtState2Event     g_CanBmsEvent.BIT.B1
