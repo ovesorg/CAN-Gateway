@@ -1,0 +1,31 @@
+schema_version: "1.0"
+kind: "repo_manifest"
+
+repo_id: ""
+repo_class: "application"
+lifecycle: "active"
+owner: "repo_owner"
+framework_repo: "dirac-framework"
+
+authority_order:
+  - repo_owner_rules
+  - repo_governance
+  - contract_spec
+  - operational_guidance
+  - historical_experience
+
+entrypoints:
+  - "docs/agent/start-here.md"
+  - "README.md"
+  - "docs/index.md"
+  - "docs/adr/index.md"
+  - "docs/reference/index.md"
+
+resource_roots:
+  governance: "docs/adr"
+  reference: "docs/reference"
+  experience: "docs"
+
+notes:
+  - "This manifest is the minimum MCP baseline managed by mkdocs-template."
+  - "Expand the manifest when the repo gains richer architecture, governance, or spec surfaces."

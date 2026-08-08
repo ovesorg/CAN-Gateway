@@ -1,0 +1,97 @@
+site_name: CAN-Gateway
+site_description: GD32F107 IoT Gateway Firmware
+site_author: Omnivoltaic Energy Solutions
+site_url: https://ovesorg.github.io/CAN-Gateway
+docs_dir: docs
+site_dir: site
+extra_javascript:
+- https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js
+- https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js
+- mkdocs_oves_template/overrides/javascripts/microsoft-auth.js
+- mkdocs_oves_template/overrides/javascripts/chartjs-init.js
+- mkdocs_oves_template/overrides/javascripts/global-doc-home.js
+- javascripts/global-doc-home.js
+extra_css:
+- mkdocs_oves_template/overrides/stylesheets/extra.css
+- stylesheets/extra.css
+extra:
+  auth:
+    bypass_local: true
+  generator: false
+  oves_doc_version: 0.1.0
+  oves_last_editor: Huashan Wang
+  oves_revision_summary: Initial documentation from source audit
+  oves_revision_date: 2026-08-08
+  oves_hub_integration:
+    enabled: true
+    cloud_home_url: https://docs.omnivoltaic.com/internal/consolidated-docs/
+    local_home_url: ''
+repo_name: ovesorg/CAN-Gateway
+repo_url: https://github.com/ovesorg/CAN-Gateway
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+  - scheme: default
+    primary: blue
+    accent: blue
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
+  - scheme: slate
+    primary: blue
+    accent: blue
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
+  features:
+  - navigation.top
+  - search.highlight
+  - content.code.copy
+  - toc.integrate
+  - navigation.tracking
+  - navigation.instant
+  - navigation.instant.progress
+markdown_extensions:
+- admonition
+- pymdownx.details
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+- tables
+- toc:
+    permalink: true
+plugins:
+- search
+- document-dates:
+    type: date
+    show_created: false
+    show_updated: true
+    show_author: false
+hooks:
+- mkdocs_oves_template/hooks/update_date.py
+- mkdocs_oves_template/hooks/build_semantic_registry.py
+- hooks/update_date.py
+- hooks/build_semantic_registry.py
+nav:
+- Home: index.md
+- Template Usage: template-usage.md
+- Template Standards:
+  - Standards And Conformance: system/template-standards-and-conformance.md
+  - Curated Doc Quality Rollout: system/curated-doc-quality-rollout-plan.md
+- Agent Context:
+  - Start Here: agent/start-here.md
+  - Capabilities: context/capabilities.md
+  - Workflows: context/workflows.md
+  - Contracts: context/contracts.md
+- Reference:
+  - Overview: reference/index.md
+  - Terminology: reference/terminology.md
+  - External References: reference/external-references.md
+copyright: Copyright &copy; 2026 Omnivoltaic Energy Solutions
+exclude_docs: |
+  en/
+  fr/
+  zh/
+  *.fr.md
+  *.zh.md

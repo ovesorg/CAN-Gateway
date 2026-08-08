@@ -1,0 +1,14 @@
+{
+  "template_package": "mkdocs-oves-template",
+  "template_version": "0.1.3",
+  "repo_name": "",
+  "marker_version": 1,
+  "last_template_sync": "2026-08-08",
+  "site_name": "",
+  "template_state": "normalized",
+  "quality_marker": "template-managed",
+  "global_search_bridge_version": 1,
+  "hub_integration_enabled": true,
+  "repo_independent_build": true,
+  "language_mode": "root-english-only"
+}

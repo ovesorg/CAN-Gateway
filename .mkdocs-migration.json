@@ -1,0 +1,59 @@
+{
+  "migration_date": "2025-11-22",
+  "package_version": "0.1.3",
+  "changes": [
+    {
+      "action": "updated",
+      "path": "requirements.txt"
+    },
+    {
+      "action": "copied",
+      "path": "overrides/partials/edition.html"
+    },
+    {
+      "action": "copied",
+      "path": "overrides/partials/copyright.html"
+    },
+    {
+      "action": "copied",
+      "path": "overrides/partials/header.html"
+    },
+    {
+      "action": "copied",
+      "path": "docs/stylesheets/extra.css"
+    },
+    {
+      "action": "copied",
+      "path": "docs/javascripts/global-doc-home.js"
+    },
+    {
+      "action": "created",
+      "path": "hooks/update_date.py"
+    },
+    {
+      "action": "created",
+      "path": "hooks/build_semantic_registry.py"
+    },
+    {
+      "action": "created",
+      "path": ".docs-template-info.json"
+    },
+    {
+      "action": "updated",
+      "path": "mkdocs.yml",
+      "details": [
+        "Added global-doc-home.js script reference",
+        "Added oves_hub_integration configuration",
+        "Added update_date.py to hooks",
+        "Added build_semantic_registry.py to hooks"
+      ]
+    }
+  ],
+  "next_steps": [
+    "pip install -r requirements.txt",
+    "mkdocs serve (test locally)",
+    "Use: mkdocs-oves-krr (instead of python scripts/krr.py)",
+    "Use: mkdocs-oves-render (for PlantUML diagrams)",
+    "Update CI/CD workflows to install mkdocs-oves-template"
+  ]
+}
