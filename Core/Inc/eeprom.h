@@ -55,7 +55,10 @@ typedef struct
 	uint8_t max_speed_limit;
 
 	uint8_t fleed[MEM_SIZE_FLID];
-	
+
+	uint32_t ccs_energy_mWh;           // 充电能量目标(mWh)，断电后恢复
+	uint8_t  ccs_energy_limit_reached; // 充电限制是否已达到，断电后恢复
+
 	uint32_t endmark;  // 4
 }USER_SET_TypeDef;
 

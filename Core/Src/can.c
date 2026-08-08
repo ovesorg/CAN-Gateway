@@ -391,7 +391,7 @@ void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len) //bms
 			memcpy((uint8_t*)&g_BmsSysInfor,data,len);
 			BmsSysInforEvent=TRUE;
 			break;
-		case 0x18FF50E6:   //ÊµÊ±ÎÂ¶ÈÓëÊäÈëµçÑ¹
+		case 0x18FF50E6:   //ÊµÊ±ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹
 			memcpy((uint8_t*)&g_BmsRtStatus1,data,len);
 			BmsRtState1Event=TRUE;
 			break;
@@ -500,8 +500,7 @@ uint8_t watchdog_flag = 0,pag_watchcount=0;
 uint32_t  bat_rcap = 0;
 uint8_t pag_watchwdg = 0;  // 0xaa
 
-static uint32_t  CcsEnergyLimitReached = 0;	
-static uint32_t g_CcsEnergyLimittime = 10000,energy_mWh = 0;  //ÉèÖÃµÄ³äµçÊ±¼ä µ¥Î»S 
+static uint32_t g_CcsEnergyLimittime = 10000;	
 
 void clear_pag_watchwdg(void)
 {
@@ -512,15 +511,16 @@ void clear_pag_watchwdg(void)
 void set_CcsEnergyLimittime(uint32_t value)
 {
 	g_CcsEnergyLimittime = value;
-	CcsEnergyLimitReached = 0;
-//	save_time= value;
+	g_UserSet.ccs_energy_limit_reached = 0;
+	EEpUpdateEnable();
 }
 
 
 void set_CcsEnergy_mWh(uint32_t value)
 {
-	energy_mWh = value;
-	CcsEnergyLimitReached = 0;
+	g_UserSet.ccs_energy_mWh = value;
+	g_UserSet.ccs_energy_limit_reached = 0;
+	EEpUpdateEnable();
 }
 
 uint32_t get_bat_rcap_mWh(void)
@@ -542,8 +542,18 @@ void CanProc(void)
 	uint8_t serial_low_cache[8];
 	uint8_t ppid[15];
 	static uint64_t g_CcsEnergyLimittime_count = 0;
+	static uint8_t charge_restored = 0;
 
-	
+	// æ–­ç”µæ¢å¤ï¼šå¦‚æžœå……ç”µæœªå®Œæˆï¼Œæ¢å¤å……ç”µä¼šè¯
+	if(!charge_restored)
+	{
+		charge_restored = 1;
+		if(g_UserSet.ccs_energy_limit_reached == 0 && g_UserSet.ccs_energy_mWh > 0)
+		{
+			g_CcsEnergyLimittime = HAL_GetTick();
+			printf("Charge session restored after power cycle: energy_mWh=%d\r\n", g_UserSet.ccs_energy_mWh);
+		}
+	}
 //	uint8_t *p_u8;
 //	uint32_t power;
 
@@ -652,7 +662,7 @@ void CanProc(void)
 				
 				tempbms_cur =tempbms_cur / 4;
 				
-				if(CcsEnergyLimitReached ==1)
+				if(g_UserSet.ccs_energy_limit_reached ==1)
 				{
 					tempbms_cur = 0;
 					ccsvcu_cur = 200;
@@ -678,8 +688,8 @@ void CanProc(void)
 			//	g_can0TxMessage_bms.tx_efid = 0x1806E5F4;
 			////can_message_transmit(CAN1, &g_can0TxMessage_bms);//to vcu dispaly
 				LogPrintf("-2222 %d  %d-g_AC_ccsinput %d  ccsvcu_cur %d\r\n",tempbms_cur,tempbms_vol,g_AC_ccsinput,ccsvcu_cur);
-				if(energy_mWh > 0)
-					LogPrintf("-2222 bat_rcap %d  energy_mWh %d- g_UserSet.lowbat %d \r\n",bat_rcap , energy_mWh, g_UserSet.lowbat);
+				if(g_UserSet.ccs_energy_mWh > 0)
+					LogPrintf("-2222 bat_rcap %d  energy_mWh %d- g_UserSet.lowbat %d \r\n",bat_rcap , g_UserSet.ccs_energy_mWh, g_UserSet.lowbat);
 					
 			}
 			
@@ -695,7 +705,7 @@ void CanProc(void)
 //		{
 //			if((PaygGetFreeState())) //free
 //			{
-//				AlarmWatchdogState &= ~0x02; //¿ªÃÅ¹· Ê¹ÄÜ ¹Ø±Õ  1 ´ò¿ª
+//				AlarmWatchdogState &= ~0x02; //ï¿½ï¿½ï¿½Å¹ï¿½ Ê¹ï¿½ï¿½ ï¿½Ø±ï¿½  1 ï¿½ï¿½
 //			}
 //			else
 //			{
@@ -711,13 +721,13 @@ void CanProc(void)
 //			g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
 //			g_can0TxMessage_bms.tx_dlen = 8;
 //			g_can0TxMessage_bms.tx_data[0] = AlarmWatchdogState;
-//			//CanTransmit(HM7280_IOT_ID_ALARM_WDG,(uint8_t*)&g_Hm7280IotAlarmWdg,8);// ¾¯¸æÒÔ¼°¿´ÃÅ¹·×´Ì¬
+//			//CanTransmit(HM7280_IOT_ID_ALARM_WDG,(uint8_t*)&g_Hm7280IotAlarmWdg,8);// ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½Å¹ï¿½×´Ì¬
 //			can_message_transmit(CAN0, &g_can0TxMessage_bms);
 //			AlarmWatchdogState_blk =  AlarmWatchdogState;
 //		}
 	
 	
-	if(pag_watchwdg == 0) // ÏÂ·¢±¾»úPPID
+	if(pag_watchwdg == 0) // ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½PPID
 	{
 		g_can0TxMessage_bms.tx_sfid = 0x00;
 		g_can0TxMessage_bms.tx_efid = 0x1806E55EUL;
@@ -742,7 +752,7 @@ void CanProc(void)
 	}
 		
 	
-	if(HAL_GetTick()-g_CanTransmitState.t5000ms>=5000) // ·ÖÎöCANÊý¾Ý
+	if(HAL_GetTick()-g_CanTransmitState.t5000ms>=5000) // ï¿½ï¿½ï¿½ï¿½CANï¿½ï¿½ï¿½ï¿½
     {
     	g_CanTransmitState.t5000ms=HAL_GetTick();
 		
@@ -768,7 +778,7 @@ void CanProc(void)
 			{
 				if((PaygGetFreeState())) //free
 				{
-					g_can0TxMessage_bms.tx_data[2] = 0x00; //¿ªÃÅ¹· Ê¹ÄÜ ¹Ø±Õ  1 ´ò¿ª
+					g_can0TxMessage_bms.tx_data[2] = 0x00; //ï¿½ï¿½ï¿½Å¹ï¿½ Ê¹ï¿½ï¿½ ï¿½Ø±ï¿½  1 ï¿½ï¿½
 				}
 				else
 				{
@@ -777,14 +787,14 @@ void CanProc(void)
 				
 			} 
 			g_can0TxMessage_bms.tx_data[0] = 0x01;
-			can_message_transmit(CAN0, &g_can0TxMessage_bms); // ÐÄÌøÒÔ¼°Î¹¹·
+			can_message_transmit(CAN0, &g_can0TxMessage_bms); // ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½Î¹ï¿½ï¿½
 		}
 		
 		
 		 memcpy(serial_high_cache, g_Devid.DevidH, sizeof(serial_high_cache));
 		 memcpy(serial_low_cache,  g_Devid.DevidL, sizeof(serial_low_cache));
 		
-		CanHm7280BuildSerialPayload(); // »ñÈ¡±¾»úµÄPPID
+		CanHm7280BuildSerialPayload(); // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PPID
 
 		if(memcmp(serial_high_cache, g_Hm7280IotSerialHigh, sizeof(serial_high_cache)) != 0 //
 			|| memcmp(serial_low_cache, g_Hm7280IotSerialLow, sizeof(serial_low_cache)) != 0)
@@ -832,20 +842,22 @@ void CanProc(void)
 	}
 
     g_CcsEnergyLimittime_count = g_UserSet.time*1000*60 ;
-	if (g_CcsEnergyLimittime > 0 &&  ((HAL_GetTick() - g_CcsEnergyLimittime) > (g_CcsEnergyLimittime_count)))  // ÉèÖÃÊ±¼ä¼ÆËã ·ÖÖÓÎªµ¥Î»- g_UserSet.time_blk
+	if (g_CcsEnergyLimittime > 0 &&  ((HAL_GetTick() - g_CcsEnergyLimittime) > (g_CcsEnergyLimittime_count)))  // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Î»- g_UserSet.time_blk
 	{
-		CcsEnergyLimitReached = 1;
+		g_UserSet.ccs_energy_limit_reached = 1;
 		g_CcsEnergyLimittime = 0;
+		EEpUpdateEnable();
 		printf("ID g_CcsEnergyLimittime TIME OVER  %d\r\n" ,g_UserSet.time );
 	}
 
 	bat_rcap = (g_BmsRtStatus3.RemainBatCapH<<8)|(g_BmsRtStatus3.RemainBatCapL);
 	
 	
-	if((energy_mWh>0)&&(bat_rcap - energy_mWh>= g_UserSet.lowbat*0.9))
+	if((g_UserSet.ccs_energy_mWh>0)&&(bat_rcap - g_UserSet.ccs_energy_mWh>= g_UserSet.lowbat*0.9))
 	{
-		energy_mWh = 0;
-		CcsEnergyLimitReached = 1;
+		g_UserSet.ccs_energy_mWh = 0;
+		g_UserSet.ccs_energy_limit_reached = 1;
+		EEpUpdateEnable();
 	}
 	
 	return ;
