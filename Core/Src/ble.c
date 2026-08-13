@@ -255,7 +255,7 @@ void BleDataReprot(uint8_t cmd )
 			break;
 		case BLE_CMD_SWCH:
 			ack=TRUE;
-			memcpy(buffer,(uint8_t*)&g_GattMem[MEM_ADDR_GCTW],MEM_SIZE_GCTW);
+			memcpy(buffer,(uint8_t*)&g_GattMem[MEM_ADDR_SWCH],MEM_SIZE_SWCH);
 			size=MEM_SIZE_SWCH;
 			break;
 		case BLE_CMD_READ:
@@ -1228,6 +1228,8 @@ void BleCmdProc(void)
 	g_GattMem[MEM_ADDR_ADDR] = g_UserSet.canid_cnt;
 	g_GattMem[MEM_ADDR_ADDR+1] = g_UserSet.canid_cnt>>8;
 	
+	g_GattMem[MEM_ADDR_RPTM] =g_UserSet.reportt_auto;
+	
 	if(BlePacktParse(uartbuff,buffer,&ret_len))
 	{
 		#ifdef BLE_MASTER_ENABLE
@@ -1271,7 +1273,7 @@ void BleCmdProc(void)
 					memcpy((uint8_t*)&g_GattMem[MEM_ADDR_READ],buffer,MEM_SIZE_READ);
 					break;
 				case BLE_CMD_RPTM:
-					//memcpy((uint8_t*)&g_GattMem[MEM_ADDR_RPTM],buffer,MEM_SIZE_RPTM);
+					memcpy((uint8_t*)&g_GattMem[MEM_ADDR_RPTM],buffer,MEM_SIZE_RPTM);
 					break;
 				case BLE_CMD_HBFQ:
 					//memcpy((uint8_t*)&g_GattMem[MEM_ADDR_HBFQ],buffer,MEM_SIZE_HBFQ);
@@ -1807,14 +1809,14 @@ void BleCmdProc(void)
 						{	
 							sprintf((char*)token,"/cmd/code/\"%s\"",buffer);
 							AtCmdTokenParse(token,"/cmd/code/\"*0");
-							}
+						}
 						
 						if( g_tokenState==TOKEN_OK)
 							memcpy((uint8_t*)&g_GattMem[MEM_ADDR_PUBK],buffer,MEM_SIZE_PUBK);
-						else if( g_tokenState==TOKEN_USEED)
-							;
-						else
-							;
+//						else if( g_tokenState==TOKEN_USEED)
+//							;
+//						else
+//							;
 
 						g_GattMem[MEM_ADDR_TKRE]=g_tokenState;
 
@@ -1829,13 +1831,17 @@ void BleCmdProc(void)
 						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_GSTW],buffer,MEM_SIZE_GSTW);
 						
 						GattGetData( LIST_CMD, CMD_GSTW, (uint8_t*)&temp16);
- 					    g_UserSet.sleeptime=temp16;
+// 					    g_UserSet.sleeptime=temp16;
 					    EEpUpdateEnable();
 						break;
 					case BLE_CMD_GCTW:
-						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_GCTW],buffer,MEM_SIZE_GCTW);
-						GattGetData( LIST_CMD, CMD_GCTW, (uint8_t*)&temp16);
-					    g_UserSet.onlinetime=temp16;
+							memcpy((uint8_t*)&g_GattMem[MEM_ADDR_GCTW],buffer,MEM_SIZE_GCTW);
+							GattGetData( LIST_CMD, CMD_GCTW, (uint8_t*)&temp16);
+							g_UserSet.onlinetime=temp16;
+							if(g_UserSet.onlinetime == 0)
+							{
+								stop_changestaate();
+							}
 					    EEpUpdateEnable();
 						break;
 					case BLE_CMD_NAPN:
@@ -1845,12 +1851,15 @@ void BleCmdProc(void)
 						break;
 					
 					case BLE_CMD_SWCH:
-						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_GCTW],buffer,MEM_SIZE_GCTW);
-						GattGetData( LIST_CMD, CMD_GCTW, (uint8_t*)&temp16);
-						g_UserSet.time=temp16;
-						set_CcsEnergyLimittime(HAL_GetTick());
-						printf("temp time= %d\n", g_UserSet.time);
-					
+					//	if(get_changestaate()== 1)
+						{
+							memcpy((uint8_t*)&g_GattMem[MEM_ADDR_SWCH],buffer,MEM_SIZE_SWCH);
+							GattGetData( LIST_CMD, CMD_SWCH, (uint8_t*)&temp16);
+							g_UserSet.time=temp16;
+							set_CcsEnergyLimittime(HAL_GetTick());
+							printf("temp time= %d\n", g_UserSet.time);
+							EEpUpdateEnable();
+						}
 					break;
 					
 					case BLE_CMD_READ:
@@ -1861,16 +1870,21 @@ void BleCmdProc(void)
 						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_RPTM],buffer,MEM_SIZE_RPTM);
 						GattGetData( LIST_CMD, CMD_RPTM, (uint8_t*)&temp16);
 					    g_UserSet.reportt_auto=temp16;
+					if(g_UserSet.reportt_auto >1) g_UserSet.reportt_auto =1;
+						printf("reportt_auto swch= %d\n", g_UserSet.reportt_auto);
 					    EEpUpdateEnable();
 						break;
 					
 						case BLE_CMD_RAML:
+						//if(get_changestaate()== 1)
+						{
 						 memcpy((uint8_t*)&g_GattMem[MEM_ADDR_RAML],buffer,MEM_SIZE_RAML);
 						 GattGetData( LIST_CMD, CMD_RAML, (uint8_t*)&temp16);
-						 g_UserSet.lowbat=temp16;
-						 set_CcsEnergy_mWh(g_UserSet.lowbat);
+						 g_UserSet.lowbat = temp16;
+						 set_CcsEnergy_mWh(get_bat_rcap_mWh());
 						 printf("temp power= %d\n", g_UserSet.lowbat);
-					
+					    EEpUpdateEnable();
+						}
 						break;	
 						case BLE_CMD_HBFQ:
 						memcpy((uint8_t*)&g_GattMem[MEM_ADDR_HBFQ],buffer,MEM_SIZE_HBFQ);

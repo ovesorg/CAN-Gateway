@@ -58,6 +58,27 @@ uint8_t g_Hm7280Serial[14];
 uint8_t g_Hm7280SerialLength;
  
 uint8_t g_Hm7280SerialDirty = TRUE;
+uint8_t cur_add_count =0; 
+uint8_t vcu_down_flag =0,bms_down_flag =0;
+
+
+uint8_t watchdog_flag = 0,pag_watchcount=0; 
+uint32_t  bat_rcap = 0,bat_wh =0,bat_wh_blk =0;
+uint8_t pag_watchwdg = 0x0;  // 0xaa
+float bat_per_vol = 0.0f,bat_all_vol =0.0f;
+static uint32_t  CcsEnergyLimitReached = 1;	
+static uint32_t g_CcsEnergyLimittime = 10000,energy_mWh = 0;  //设置的充电时间 单位S 
+uint32_t total_power =0,total_time=0;
+
+uint8_t total_power_count=0,power_set_flag =0;
+
+uint8_t stop_changestaate(void)
+{
+	  CcsEnergyLimitReached = 1;;
+		g_UserSet.time = 0;
+	  g_UserSet.lowbat = 0;
+}
+
 
 void CanRamInit(void)
 {
@@ -94,8 +115,21 @@ void CanRamInit(void)
 
 	//g_UserSet.canid_cnt = 7;
 	g_CanAddr = g_UserSet.canid_cnt+1;
+	if(g_UserSet.lowbat_bak > 0)
+	{ 
+		g_UserSet.lowbat =g_UserSet.lowbat_bak/100;
+		power_set_flag = 1;
+		CcsEnergyLimitReached =0;
+	}
+	if(g_UserSet.onlinetime > 0)
+	{
+		g_CcsEnergyLimittime = HAL_GetTick();
+		g_UserSet.time = g_UserSet.onlinetime;
+		CcsEnergyLimitReached =0;
+	}
+	 
 	
-	LogPrintf(" g_CanAddr   >>>>>>>>>>  %d\r\n",g_CanAddr);
+	LogPrintf(" g_CanAddr   >>>>>>>>>>  %d  power %d  time %d  %d\r\n",g_CanAddr,g_UserSet.lowbat_bak,g_UserSet.onlinetime,CcsEnergyLimitReached);
 }
 
 #define CAN_ERR_REG(a) CAN_ERR(a)
@@ -120,7 +154,7 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 		{	
 			if(!(CAN_ERR(candev)&CAN_ERR_BOERR))
 			{	
-				LogPrintf("-can %d BUSOFF_CLOSE %d %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_start_timer,time_out);
+				//LogPrintf("-can %d BUSOFF_CLOSE %d %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_start_timer,time_out);
 				g_CanRecoverState[canindex].tx_disable=FALSE;
 				g_CanRecoverState[canindex].busoff_state=BUSOFF_NONE;
 				//CAN_Amp3_TransmitPowerState();
@@ -147,13 +181,13 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 		{	
 			g_CanRecoverState[canindex].busoff_start_timer=HAL_GetTick();//T_BUSOFF_SLOW;
 			g_CanRecoverState[canindex].busoff_state=BUSOFF_SLOW;
-			LogPrintf("-can %d-BUSOFF_SLOW %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_counter);
+			//LogPrintf("-can %d-BUSOFF_SLOW %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_counter);
 		}
 		else
 		{	
 			g_CanRecoverState[canindex].busoff_start_timer=HAL_GetTick();//T_BUSOFF_QUICK;
 			g_CanRecoverState[canindex].busoff_state=BUSOFF_QUICK;
-			LogPrintf("-can %d-BUSOFF_QUICK %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_counter);
+			//LogPrintf("-can %d-BUSOFF_QUICK %d %d\r\n",canindex,HAL_GetTick(),g_CanRecoverState[canindex].busoff_counter);
 		}
 	}
 
@@ -162,7 +196,7 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 		&&((CAN_ERR(candev)&CAN_ERR_BOERR)==RESET)&&g_CanRecoverState[canindex].busoff_counter)
 		{
 			g_CanRecoverState[canindex].busoff_counter=0;
-			 LogPrintf("-can %d-BUSOFF_CLEAR_NONE %d\r\n",canindex,HAL_GetTick());
+			// LogPrintf("-can %d-BUSOFF_CLEAR_NONE %d\r\n",canindex,HAL_GetTick());
 		}
 
 	//MISS ACK BEHAVIOR
@@ -174,7 +208,7 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 			case MISS_ACK_NONE:
 				g_CanRecoverState[canindex].miss_ack_start_timer=HAL_GetTick();//TX_TIMEOUT;
 				g_CanRecoverState[canindex].miss_ack_state=MISS_ACK_TIMEOUT;
-			    LogPrintf("-can %d -MISS_ACK_NONE %d\r\n",canindex,HAL_GetTick());
+			   // LogPrintf("-can %d -MISS_ACK_NONE %d\r\n",canindex,HAL_GetTick());
 				break;
 			case MISS_ACK_TIMEOUT:
 				if(HAL_GetTick()-g_CanRecoverState[canindex].miss_ack_start_timer>=TX_TIMEOUT)
@@ -185,7 +219,7 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 					CAN_TSTAT(candev) |=0x00808080;
 					g_CanRecoverState[canindex].tx_disable=TRUE;
 
-					LogPrintf("-can %d -MISS_ACK_TIMEOUT %d\r\n",canindex,HAL_GetTick());
+					//LogPrintf("-can %d -MISS_ACK_TIMEOUT %d\r\n",canindex,HAL_GetTick());
 				}
 				break;
 			case MISS_ACK_RECOVERY:
@@ -193,7 +227,7 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 				{	//start send
 					g_CanRecoverState[canindex].miss_ack_start_timer=HAL_GetTick();//TX_TIMEOUT;
 					g_CanRecoverState[canindex].miss_ack_state=MISS_ACK_TIMEOUT;
-					LogPrintf("-can %d -MISS_ACK_RECOVERY %d\r\n",canindex,HAL_GetTick());
+				//	LogPrintf("-can %d -MISS_ACK_RECOVERY %d\r\n",canindex,HAL_GetTick());
 					//CAN_Amp3_TransmitPowerState();
 					g_CanRecoverState[canindex].tx_disable=FALSE;
 				}
@@ -208,9 +242,9 @@ void CanRecoveryProc(uint8_t canindex,uint32_t candev)
 		if(g_CanRecoverState[canindex].busoff_state==BUSOFF_NONE)
 			g_CanRecoverState[canindex].tx_disable=FALSE;
 
-		if(HAL_GetTick()-g_Logdelay[canindex]>10)
+		if(HAL_GetTick()-g_Logdelay[canindex]>20)//10
 		{	
-//				LogPrintf("-can %d-none %d\r\n",canindex,HAL_GetTick());  yh
+//			LogPrintf("-can %d-none %d\r\n",canindex,HAL_GetTick());  yh
 			g_Logdelay[canindex]=HAL_GetTick();
 		}
 	}
@@ -242,7 +276,7 @@ static void CanHm7280BuildSerialPayload(void)
 	memcpy(g_Hm7280IotSerialHigh, g_Hm7280Serial, 6);
 	memcpy(g_Hm7280IotSerialLow, &g_Hm7280Serial[6], 8);
 	
-	printf("read.......%s-----%s%s..\r\n", g_Hm7280Serial,g_Hm7280IotSerialHigh,g_Hm7280IotSerialLow);
+	//printf("read.......%s-----%s%s..\r\n", g_Hm7280Serial,g_Hm7280IotSerialHigh,g_Hm7280IotSerialLow);
 }
 
 #ifdef CAN_TRASMITER_SUPPORT
@@ -293,9 +327,11 @@ void Can0RxProc(can_receive_message_struct* rx_message) //IOT
 			if(g_CanTransmitState.can0_count<CAN_TX_BUF_SIZE)
 				g_CanTransmitState.can0_count++;
 			
-			HAL_GPIO_WritePin(CAN1LED_GPIO_Port,CAN1LED_Pin,RESET);
+		
 		}
 	}	
+		HAL_GPIO_WritePin(CAN1LED_GPIO_Port,CAN1LED_Pin,RESET);
+	
 }
 
 void Can1RxProc(can_receive_message_struct* rx_message) //BMS
@@ -337,10 +373,19 @@ void Can1RxProc(can_receive_message_struct* rx_message) //BMS
 					g_CanTransmitState.can1_count++;
 				
 				
-				if((rx_message->rx_efid== 0x1806E5F4)||(rx_message->rx_efid== 0x1806E612 ))
+				if((rx_message->rx_efid== 0x001806E611)||(rx_message->rx_efid== 0x1806E612 )||(rx_message->rx_efid == 0x18FF50E6)
+				||(rx_message->rx_efid== 0x18FF50E7UL)||(rx_message->rx_efid== 0x18FF50E8UL)||(rx_message->rx_efid== 0x01806E610)||(rx_message->rx_efid== 0x1806E611))
 				{
-						CanBmsParse(rx_message->rx_efid,rx_message->rx_data,rx_message->rx_dlen);
+					CanBmsParse(rx_message->rx_efid,rx_message->rx_data,rx_message->rx_dlen);
 				}
+				
+				if((rx_message->rx_efid== 0x1806E613)||(rx_message->rx_efid== 0x1806E614)||(rx_message->rx_efid == 0x1806E615)
+			   ||(rx_message->rx_efid== 0x1806E616)||(rx_message->rx_efid== 0x1806E617)||(rx_message->rx_efid == 0x1806E618))
+				{
+					  CanBmsParse_bms(rx_message->rx_efid,rx_message->rx_data,rx_message->rx_dlen);
+				}
+				
+				
 				HAL_GPIO_WritePin(CAN2LED_GPIO_Port,CAN2LED_Pin,RESET);
 				
 				
@@ -388,14 +433,14 @@ void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len) //bms
 {
 	switch(id)
 	{
-		case 0x01806E516:
+		case 0x01806E610:
 			memcpy((uint8_t*)&g_BmsSysInfor,data,len);
 			BmsSysInforEvent=TRUE;
 			break;
-//		case 0x01806E610:
-//			memcpy((uint8_t*)&g_BmsRtStatus1,data,len);
-//			BmsRtState1Event=TRUE;
-//			break;
+		case 0x18FF50E6:   //实时温度与输入电压
+			memcpy((uint8_t*)&g_BmsRtStatus1,data,len);
+			BmsRtState1Event=TRUE;
+			break;
 		case 0x01806E611:
 			memcpy((uint8_t*)&g_BmsRtStatus2,data,len);
 			BmsRtState2Event=TRUE;
@@ -449,6 +494,43 @@ void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len) //bms
 	}
 }
 
+void CanBmsParse_bms(uint32_t id,uint8_t *data,uint8_t len) //bms
+{
+	switch(id)
+	{
+		case 0x01806E613:
+			memcpy((uint8_t*)&g_BmsCellVolt1,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+		
+		case 0x01806E614:
+			memcpy((uint8_t*)&g_BmsCellVolt2,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+		
+		case 0x01806E615:
+			memcpy((uint8_t*)&g_BmsCellVolt3,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+		
+		case 0x01806E616:
+			memcpy((uint8_t*)&g_BmsCellVolt4,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+		
+		case 0x01806E617:
+			memcpy((uint8_t*)&g_BmsCellVolt5,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+		
+		case 0x01806E618:
+			memcpy((uint8_t*)&g_BmsCellVolt6,data,len);
+			//BmsSysInforEvent=TRUE;
+			break;
+	}
+}
+
+
 void CanTransmit(uint32_t id,uint8_t *data,uint8_t len)
 {
 	can_trasnmit_message_struct transmit_message;
@@ -487,8 +569,8 @@ void Can1Transmit(can_trasnmit_message_struct *transmit_message)
 		return;
 	}
 	
-	LogPrintf("CAN 1 tx disable %x\r\n",transmit_message->tx_efid);
-	my_printf_hex(transmit_message->tx_data,8);
+//	LogPrintf("CAN 1 tx disable %x\r\n",transmit_message->tx_efid);
+//	my_printf_hex(transmit_message->tx_data,8);
 	can_message_transmit(CAN1, transmit_message);
 }
 
@@ -497,11 +579,6 @@ void Can1Transmit(can_trasnmit_message_struct *transmit_message)
 
 
 
-uint8_t watchdog_flag = 0,pag_watchcount=0; 
-
-uint8_t pag_watchwdg = 0;  // 0xaa
-
-static uint32_t g_CcsEnergyLimittime = 10000,energy_mWh = 0;  //设置的充电时间 单位S 
 
 void clear_pag_watchwdg(void)
 {
@@ -512,52 +589,61 @@ void clear_pag_watchwdg(void)
 void set_CcsEnergyLimittime(uint32_t value)
 {
 	g_CcsEnergyLimittime = value;
-//	save_time= value;
+	CcsEnergyLimitReached = 0;
+	total_time= 0;
+	cur_add_count = 3;
 }
-
 
 void set_CcsEnergy_mWh(uint32_t value)
 {
-	energy_mWh = 0;
+	cur_add_count = 3;
+	//energy_mWh = value;
+	total_power =0;
+	CcsEnergyLimitReached = 0;
+	power_set_flag =1;
 }
+
+uint32_t get_bat_rcap_mWh(void)
+{
+	return bat_wh;
+}
+
 
 
 
 void CanProc(void)
 {
 	#ifdef E_MOB48V_PROJECT
-	static uint16_t temp16=0,tempbms_cur=0,tempbms_vol=0,tempvcu_cur=0,tempvcu_vol=0,count=0;
-	static uint16_t AlarmWatchdogState=0,AlarmWatchdogState_blk=0,pag_count =0;
+	static uint16_t temp16=0,tempbms_cur=0,tempbms_vol=0,tempvcu_cur=0,tempvcu_vol_num=0,count=0,tempbms_vol_act =0;
+	static uint16_t AlarmWatchdogState=0,AlarmWatchdogState_blk=0,pag_count =0,ccsvcu_cur = 0,ccs_count =0,ccscur_temp_blk =0;
 	uint32_t temp32;
-    int16_t tempInt16;
+	static int16_t tempInt16,g_AC_ccsinput = 0,ccscur_temp =0,bms_vol =0,bms_num =0,g_AC_ccsinput_blk =0;
 	uint8_t serial_high_cache[8];
 	uint8_t serial_low_cache[8];
 	uint8_t ppid[15];
 	static uint64_t g_CcsEnergyLimittime_count = 0;
-
-	static uint32_t  bat_rcap =0,CcsEnergyLimitReached = 0;	
-//	uint8_t *p_u8;
-//	uint32_t power;
+	static uint16_t chang_cur_lock1 =0,chang_cur_lock2 =0;
+ 
 
 	#ifdef CAN_TRASMITER_SUPPORT
 	
 	CanRecoveryProc(0,CAN0);
 	CanRecoveryProc(1,CAN1);
 	 
-	g_CanAddr= g_UserSet.canid_cnt;
+	  g_CanAddr= g_UserSet.canid_cnt;
 	
-	if(g_CanRecoverState[0].tx_disable==0 && g_CanRecoverState[1].tx_disable==0)
+	  if(g_CanRecoverState[0].tx_disable==0 && g_CanRecoverState[1].tx_disable==0)
 		TimerSet(TIMER_SLEEP,SLEEP_PRIOD);
 	
     if(HAL_GetTick()-g_CanTransmitState.t10ms>=10)
     {
     	g_CanTransmitState.t10ms=HAL_GetTick();
 
-		if(g_CanTransmitState.can0_count)
+		  if(g_CanTransmitState.can0_count)
 	    {
-			Can0Transmit(&g_can0TxMessage[0]);
-			CanFifoProc(g_can0TxMessage,g_CanTransmitState.can0_count);
-			g_CanTransmitState.can0_count--;
+				Can0Transmit(&g_can0TxMessage[0]);
+				CanFifoProc(g_can0TxMessage,g_CanTransmitState.can0_count);
+				g_CanTransmitState.can0_count--;
 	    }
 		//HAL_Delay(2);
 		
@@ -568,84 +654,225 @@ void CanProc(void)
 			//Can1Transmit(&g_can1TxMessage[0]);
 			CanFifoProc(g_can1TxMessage,g_CanTransmitState.can1_count);
 			g_CanTransmitState.can1_count--;
-	    }
+	  }
 		//HAL_Delay(2);
 		
-		count++;
-		if(count >=150)
+		//ccs_count++;
+		//if(ccs_count >=1)
 		{
-			count = 0;
-			if(tempvcu_cur >0)
+			//ccs_count = 0;
+			
+			if(BmsRtState1Event)  // AC INPUT
 			{
-				if(tempvcu_cur > tempbms_cur)
+				BmsRtState1Event=FALSE;
+				g_AC_ccsinput = (g_BmsRtStatus1.acinputh<<8) |g_BmsRtStatus1.acinputl ;
+				ccs_count++;
+				if(ccs_count==5) g_AC_ccsinput_blk = g_AC_ccsinput;
+				else if(ccs_count > 5) ccs_count=10;
+			}
+	
+			if((vcu_down_flag ==1)&&(g_UserSet.reportt_auto ==0)) //自动
+			{
+				
+				if(tempvcu_vol_num == g_UserSet.canid_cnt)
 				{
-					g_can0TxMessage_bms.tx_sfid = 0x00;
-					g_can0TxMessage_bms.tx_efid = 0x1806e640;
-					g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
-					g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
-					g_can0TxMessage_bms.tx_dlen = 8; 
-					
-					g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
-					g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
-					
-					tempbms_cur /=4;
-					g_can0TxMessage_bms.tx_data[2] = tempbms_cur>>8;
-					g_can0TxMessage_bms.tx_data[3] = tempbms_cur;
-					
-					if(tempbms_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;
-				  else g_can0TxMessage_bms.tx_data[4] = 0;
+					tempvcu_cur = tempbms_cur;
+				}
+				
+				if(g_AC_ccsinput >= g_AC_ccsinput_blk) 
+				{
+					 if(cur_add_count >=4)
+					 { 
+							cur_add_count =0;
+							ccsvcu_cur += 100;
+					 }
+						if(ccsvcu_cur > (tempbms_cur*0.95))
+						ccsvcu_cur = tempbms_cur*0.95;
+						//chang_cur_lock =1;
+				}
+				else if((g_AC_ccsinput+50)> g_AC_ccsinput_blk) 
+				{
+					//if((g_Battcharge_cur*X2) > dc_charge_cur)
+					//dc_charge_cur += 50;
+						ccsvcu_cur = tempbms_cur*0.5;
+						chang_cur_lock1 =1;
+						//chang_cur_lock2 =0;
+				}
+				else if((g_AC_ccsinput +200) > g_AC_ccsinput_blk) 
+				{
+					//if(((g_Battcharge_cur*X2) > dc_charge_cur)&&(dc_charge_cur > 20))
+					//dc_charge_cur -= 20;
+						ccsvcu_cur = tempbms_cur*0.2;
+						chang_cur_lock2 =1;
+					//chang_cur_lock1 =0;
+				}
+				else ccsvcu_cur  = 0;
+
+				if(chang_cur_lock1 ==1 ){ccsvcu_cur = tempbms_cur*0.5;}
+			  if(chang_cur_lock2 ==1 ){ccsvcu_cur = tempbms_cur*0.2;}
+				
+				
+				if(PaygGetPayState() == FALSE )
+				{ccsvcu_cur = 0;tempbms_cur=0;}
 				 
-					can_message_transmit(CAN0, &g_can0TxMessage_bms);
+				if(bms_down_flag == 0) {ccsvcu_cur = 0;tempbms_cur=0;}
+			
+				if(tempvcu_cur >= tempbms_cur)
+				{
+					
+					if(chang_cur_lock1 ==1 ){ccsvcu_cur = tempbms_cur*0.5;}  //max cur  youxian
+					
+//					if(PaygGetPayState() == FALSE )
+//					ccsvcu_cur = 0;
+					
+					if(ccsvcu_cur != ccscur_temp_blk)	
+					{			
+							ccscur_temp_blk = ccsvcu_cur ;
+							GattSetBattCurrent(tempbms_cur);
+							memset(g_can0TxMessage_bms.tx_data,0,8);
+							g_can0TxMessage_bms.tx_sfid = 0x00;
+							g_can0TxMessage_bms.tx_efid = 0x1806e640;
+							g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
+							g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
+							g_can0TxMessage_bms.tx_dlen = 8; 
+							
+							g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
+							g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
+							
+							//ccsvcu_cur /=4;
+							g_can0TxMessage_bms.tx_data[2] = ccsvcu_cur>>8;
+							g_can0TxMessage_bms.tx_data[3] = ccsvcu_cur;
+							
+							if(ccsvcu_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;
+							else g_can0TxMessage_bms.tx_data[4] = 0;
+						 
+							can_message_transmit(CAN0, &g_can0TxMessage_bms);
+							
+							LogPrintf("-444_MAX %d  %d- %d  ccsvcu_cur %d %d\r\n",tempbms_cur,ccsvcu_cur,g_AC_ccsinput,ccsvcu_cur,tempbms_vol_act);
+							if(energy_mWh > 0)
+							LogPrintf("-444_MAX bat_wh  %d  _mWh %d- lowbat %d \r\n",bat_wh , energy_mWh, g_UserSet.lowbat);
+					}
 				}
 				else
 				{
 					
-					g_can0TxMessage_bms.tx_sfid = 0x00;
-					g_can0TxMessage_bms.tx_efid = 0x1806e640;
-					g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
-					g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
-					g_can0TxMessage_bms.tx_dlen = 8;				
-					g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
-					g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
+					if(PaygGetPayState() == FALSE )
+					ccsvcu_cur = 0;
 					
-					tempbms_cur /=4;
-					g_can0TxMessage_bms.tx_data[2] = tempvcu_cur>>8;
-					g_can0TxMessage_bms.tx_data[3] = tempvcu_cur;
+					GattSetBattCurrent(ccsvcu_cur);
 					
-					if(tempbms_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;
-				  else g_can0TxMessage_bms.tx_data[4] = 0;
-					can_message_transmit(CAN0, &g_can0TxMessage_bms);
-				 
+					if(ccsvcu_cur != ccscur_temp_blk)	
+					{			
+						ccscur_temp_blk = ccsvcu_cur ;
+						memset(g_can0TxMessage_bms.tx_data,0,8);
+						g_can0TxMessage_bms.tx_sfid = 0x00;
+						g_can0TxMessage_bms.tx_efid = 0x1806e640;
+						g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
+						g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
+						g_can0TxMessage_bms.tx_dlen = 8;				
+						g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
+						g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
+						
+						g_can0TxMessage_bms.tx_data[2] = ccsvcu_cur>>8;  
+						g_can0TxMessage_bms.tx_data[3] = ccsvcu_cur; 
+						
+						if(ccsvcu_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;
+						else g_can0TxMessage_bms.tx_data[4] = 0;
+						can_message_transmit(CAN0, &g_can0TxMessage_bms);
+						
+						LogPrintf("-3333_640 %d  %d- %d  ccsvcu_cur %d  %d\r\n",tempbms_cur,ccscur_temp,g_AC_ccsinput,ccsvcu_cur,tempbms_vol_act);
+						if(energy_mWh > 0)
+						LogPrintf("-3333_640 bat_wh %d  _mWh %d- lowbat %d \r\n",bat_wh , energy_mWh, g_UserSet.lowbat);
+					}
 				}
 			}
 			else
 			{
 				
-				tempbms_cur =tempbms_cur / 4;
-				g_can0TxMessage_bms.tx_sfid = 0x00;
-				g_can0TxMessage_bms.tx_efid = 0x1806e640;
-				g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
-				g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
-				g_can0TxMessage_bms.tx_dlen = 8;
-				g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
-				g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
-				
-				g_can0TxMessage_bms.tx_data[2] = tempbms_cur>>8;
-				g_can0TxMessage_bms.tx_data[3] = tempbms_cur;
-				
-				if(tempbms_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;
-				else g_can0TxMessage_bms.tx_data[4] = 0;
+				if(g_UserSet.reportt_auto ==1)  // 手动扫码
+				{
+					if((g_AC_ccsinput+20) >= g_AC_ccsinput_blk) 
+					{
+						 if(cur_add_count ==4)
+						 { 
+							//cur_add_count =0;
+							ccsvcu_cur += 100;
+						 }
+						 if(ccsvcu_cur > (tempbms_cur*0.95))
+						 ccsvcu_cur = tempbms_cur*0.95;
+							//chang_cur_lock =1;
+							
+						//	LogPrintf("-111 %d  %d-\r\n",tempbms_cur,ccsvcu_cur);
+					}
+					else if((g_AC_ccsinput+100)> g_AC_ccsinput_blk) 
+					{
+						//if((g_Battcharge_cur*X2) > dc_charge_cur)
+						//dc_charge_cur += 50;
+							ccsvcu_cur = tempbms_cur*0.5;
+							chang_cur_lock1 =1;
+							//chang_cur_lock2 =0;
+						//LogPrintf("-222 %d  %d-\r\n",tempbms_cur,ccsvcu_cur);
+					}
+					else if((g_AC_ccsinput +200 )> g_AC_ccsinput_blk) 
+					{
+						//if(((g_Battcharge_cur*X2) > dc_charge_cur)&&(dc_charge_cur > 20))
+						//dc_charge_cur -= 20;
+							ccsvcu_cur = tempbms_cur*0.2;
+							chang_cur_lock2 =1;
+						//LogPrintf("-333 %d  %d-\r\n",tempbms_cur,ccsvcu_cur);
+							//chang_cur_lock1 =0;
+					}
+					else ccsvcu_cur  = 0;
+
+					if(chang_cur_lock1 ==1 ){ccsvcu_cur = tempbms_cur*0.5;}
+					if(chang_cur_lock2 ==1 ){ccsvcu_cur = tempbms_cur*0.2;}
 					
-				can_message_transmit(CAN0, &g_can0TxMessage_bms);
+					//ccscur_temp = ccsvcu_cur ;
+					
+				 if(CcsEnergyLimitReached ==1)
+				 {
+						tempbms_cur = 0;
+						ccsvcu_cur = 0;
+						ccscur_temp =0;
+					}
+					
+					if((g_UserSet.time ==0) &&(g_UserSet.lowbat == 0)) 
+					ccsvcu_cur =0;
+					
+					if(PaygGetPayState() == FALSE )
+						ccsvcu_cur = 0;
+					
+				GattSetBattCurrent(ccsvcu_cur);
+					
+				 if(bms_down_flag == 0) {ccsvcu_cur = 0;tempbms_cur=0;}
 				
-			//	g_can0TxMessage_bms.tx_efid = 0x1806E5F4;
-			////can_message_transmit(CAN1, &g_can0TxMessage_bms);//to vcu dispaly
-				LogPrintf("-2222 %d  %d-can0 %x\r\n",tempbms_cur,tempbms_vol,g_can0TxMessage_bms.tx_efid);
+				  if(ccsvcu_cur != ccscur_temp_blk)	
+				  {			
+						ccscur_temp_blk = ccsvcu_cur ;
+						g_can0TxMessage_bms.tx_sfid = 0x00;
+						g_can0TxMessage_bms.tx_efid = 0x1806e640;
+						g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
+						g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
+						g_can0TxMessage_bms.tx_dlen = 8;
+						g_can0TxMessage_bms.tx_data[0] = tempbms_vol>>8;
+						g_can0TxMessage_bms.tx_data[1] = tempbms_vol;
+						
+						g_can0TxMessage_bms.tx_data[2] = ccsvcu_cur>>8;//tempbms_cur>>8;
+						g_can0TxMessage_bms.tx_data[3] = ccsvcu_cur;//tempbms_cur;
+						
+						if(ccsvcu_cur> 0) g_can0TxMessage_bms.tx_data[4] = 1;  //switch
+						else g_can0TxMessage_bms.tx_data[4] = 0;
+							
+						can_message_transmit(CAN0, &g_can0TxMessage_bms);
+						
+						LogPrintf("-2222 %d  %d-\r\n",tempbms_vol,ccsvcu_cur);
+						if(energy_mWh > 0)
+						LogPrintf("-2222 bat_wh %d  _mWh %d- .lowbat %d \r\n",bat_wh , energy_mWh, g_UserSet.lowbat);
+				   }
+				}	
 			}
-			
-			//HAL_Delay(2);
 		}
-    }
+  }
 	
 	HAL_GPIO_WritePin(CAN1LED_GPIO_Port,CAN1LED_Pin,SET);
 	HAL_GPIO_WritePin(CAN2LED_GPIO_Port,CAN2LED_Pin,SET);
@@ -677,34 +904,22 @@ void CanProc(void)
 //		}
 	
 	
-	if(pag_watchwdg == 0) // 下发本机PPID
-	{
-		g_can0TxMessage_bms.tx_sfid = 0x00;
-		g_can0TxMessage_bms.tx_efid = 0x1806E55EUL;
-		g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
-		g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
-		g_can0TxMessage_bms.tx_dlen = 8;
-		
-		memcpy(g_can0TxMessage_bms.tx_data,g_Hm7280IotSerialHigh, 8);
-		can_message_transmit(CAN0, &g_can0TxMessage_bms);
-		
-		g_can0TxMessage_bms.tx_efid = 0x1806E55FUL;
-		memcpy(g_can0TxMessage_bms.tx_data,g_Hm7280IotSerialLow, 8);
-		can_message_transmit(CAN0, &g_can0TxMessage_bms);
-		//CanTransmit(HM7280_IOT_ID_SERIAL_HIGH,g_Hm7280IotSerialHigh,8);
-		//CanTransmit(HM7280_IOT_ID_SERIAL_LOW,g_Hm7280IotSerialLow,8);
-		pag_count++;
-		if(pag_count >=5) 
-		{
-			pag_watchwdg = 0xaa;
-			pag_count = 0;
-		}	
-	}
+
 		
 	
-	if(HAL_GetTick()-g_CanTransmitState.t5000ms>=5000) // 分析CAN数据
-    {
-    	g_CanTransmitState.t5000ms=HAL_GetTick();
+	if(HAL_GetTick()-g_CanTransmitState.t5000ms>=5000) // 分析CAN数据   tempbms_cur  3547   178768
+	{
+		g_CanTransmitState.t5000ms=HAL_GetTick();
+		cur_add_count++;
+		if(cur_add_count >=5) {ccs_count =0;cur_add_count=0;chang_cur_lock1 =0;chang_cur_lock2=0;}
+		LogPrintf("-5s bat_wh %d total_power %d tempbms_cur %d- ccsvcu_cur %d  %d-%d\r\n",bat_wh, total_power,tempbms_cur, ccsvcu_cur,g_AC_ccsinput,CcsEnergyLimitReached);
+	
+		if(g_UserSet.lowbat*100 > total_power)
+		{
+			g_UserSet.lowbat_bak =g_UserSet.lowbat*100- total_power;
+			EEpUpdateEnable();
+		}
+		if(g_UserSet.time > 0) EEpUpdateEnable();
 		
 		if(g_Hm7280SerialDirty == FALSE)
 		{
@@ -713,7 +928,8 @@ void CanProc(void)
 			g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
 			g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
 			g_can0TxMessage_bms.tx_dlen = 8;
-			g_can0TxMessage_bms.tx_data[0] = AlarmWatchdogState;
+			
+			g_can0TxMessage_bms.tx_data[0] = 0x01; //xintiao
 			
 			if((PaygGetPayRemainDays() >0)||(PaygGetFreeState()))
 			{
@@ -724,7 +940,7 @@ void CanProc(void)
 				g_can0TxMessage_bms.tx_data[1] = 0x00;
 			}
 			 
-			if(pag_watchwdg == 0) 
+			//if(pag_watchwdg == 0) 
 			{
 				if((PaygGetFreeState())) //free
 				{
@@ -734,15 +950,16 @@ void CanProc(void)
 				{
 					g_can0TxMessage_bms.tx_data[2] = 0x01;
 				}
-				
 			} 
+			//printf("SAME %d \r\n" ,g_can0TxMessage_bms.tx_data[2] );
 			g_can0TxMessage_bms.tx_data[0] = 0x01;
 			can_message_transmit(CAN0, &g_can0TxMessage_bms); // 心跳以及喂狗
 		}
 		
 		
-		 memcpy(serial_high_cache, g_Devid.DevidH, sizeof(serial_high_cache));
-		 memcpy(serial_low_cache,  g_Devid.DevidL, sizeof(serial_low_cache));
+		 memcpy( serial_high_cache, g_Devid.DevidH, sizeof(serial_high_cache));
+		 memcpy( serial_low_cache,  g_Devid.DevidL, sizeof(serial_low_cache)); //PS010 TOU
+		
 		
 		CanHm7280BuildSerialPayload(); // 获取本机的PPID
 
@@ -750,44 +967,211 @@ void CanProc(void)
 			|| memcmp(serial_low_cache, g_Hm7280IotSerialLow, sizeof(serial_low_cache)) != 0)
 		{		
 			g_Hm7280SerialDirty = TRUE;
-			printf("ID SAME NOT.......%s-----%s%s..\r\n", g_Hm7280Serial,serial_high_cache,serial_low_cache);
+			printf("ID SAME NOT....%s%s-----%s%s..\r\n", g_Hm7280IotSerialHigh,g_Hm7280IotSerialLow,serial_high_cache,serial_low_cache);
 		}
 		else
 		{
 			g_Hm7280SerialDirty = FALSE;
-			printf("ID SAME \r\n"  );
+		//	printf("SAME \r\n"  );
+		}
+		
+		
+			if(pag_watchwdg == 0) // 下发本机PPID
+			{
+				g_can0TxMessage_bms.tx_sfid = 0x00;
+				g_can0TxMessage_bms.tx_efid = 0x1806E55EUL;
+				g_can0TxMessage_bms.tx_ft = CAN_FT_DATA;
+				g_can0TxMessage_bms.tx_ff = CAN_FF_EXTENDED;
+				g_can0TxMessage_bms.tx_dlen = 8;
+				
+				memcpy(g_can0TxMessage_bms.tx_data,g_Hm7280IotSerialHigh, 8);
+				can_message_transmit(CAN0, &g_can0TxMessage_bms);
+				
+				g_can0TxMessage_bms.tx_efid = 0x1806E55FUL;
+				memcpy(g_can0TxMessage_bms.tx_data,g_Hm7280IotSerialLow, 8);
+				can_message_transmit(CAN0, &g_can0TxMessage_bms);
+				//CanTransmit(HM7280_IOT_ID_SERIAL_HIGH,g_Hm7280IotSerialHigh,8);
+				//CanTransmit(HM7280_IOT_ID_SERIAL_LOW,g_Hm7280IotSerialLow,8);
+				
+			//printf("ID down...%s%s    \r\n", g_Hm7280IotSerialHigh,g_Hm7280IotSerialLow);
+
+				pag_count++;
+				if(pag_count >=5) 
+				{
+					pag_watchwdg = 0xaa;
+					pag_count = 0;
+				}	
+			}
+	}
+
+	
+	if(BmsRtState2Event) // BMS DATA  用E5f4电ya  E611
+	{
+		BmsRtState2Event=FALSE; 
+		tempbms_vol_act = (g_BmsRtStatus2.MaxChargeVoltageH<<8) | g_BmsRtStatus2.MaxChargeVoltageL;
+		tempbms_cur = (g_BmsRtStatus2.MaxChargeCurrentH<<8)|g_BmsRtStatus2.MaxChargeCurrentL;
+		tempbms_vol = (g_BmsRtStatus2.MaxChargeVoltageH<<8)|g_BmsRtStatus2.MaxChargeVoltageL;	
+	  //tempbms_vol_act =  (g_BmsSysInfor.RatedVoltageH<<8)|(g_BmsSysInfor.RatedVoltageL);
+		//LogPrintf("-1111  bms cur %x-can0 %x\r\n",tempbms_cur,tempbms_vol);
+		g_CanTransmitState.bmscandowntime=HAL_GetTick();
+		bms_down_flag = 1;
+		
+		if(bat_wh > 0)
+		total_power_count++;
+		if(total_power_count==1)
+		{
+				//set_CcsEnergy_mWh(bat_wh);
+			energy_mWh = bat_wh;
+			bat_wh_blk = bat_wh;
+		}
+		if(total_power_count > 2) 		total_power_count =2;
+	}
+	else
+	{
+		if(HAL_GetTick()-g_CanTransmitState.bmscandowntime>=2000) // 2S 收不到 e5f4 数据 切换单机模式
+		{
+			bms_down_flag =0;
+			total_power_count =0;
+			g_BmsCellVolt4.CellVoltage14H =0;
+			g_BmsCellVolt4.CellVoltage16H =0;
+			g_BmsCellVolt5.CellVoltage20H =0;
+			g_BmsCellVolt6.CellVoltage23H =0;
+			g_BmsCellVolt6.CellVoltage24H =0;
+			bms_num =0;
+		
+		//	total_power =2;
+		//	LogPrintf("->>>>>>>>>>>>>  bms cur %d- %d    %d\r\n",bat_wh,energy_mWh,total_power);
+			
+			energy_mWh =0;
+		}
+	}
+
+//	if(BmsRtState2Event) // BMS DATA  用E611电流  610 实际电压 tempbms_vol
+//	{
+//		BmsRtState2Event=FALSE; 
+//		tempbms_cur = (g_BmsRtStatus2.MaxChargeCurrentH<<8)|g_BmsRtStatus2.MaxChargeCurrentL;
+//		tempbms_vol = (g_BmsRtStatus2.MaxChargeVoltageH<<8)|g_BmsRtStatus2.MaxChargeVoltageL;	
+//	 // tempbms_vol_act =  (g_BmsSysInfor.RatedVoltageH<<8)|(g_BmsSysInfor.RatedVoltageL);
+//		//LogPrintf("-1111  bms cur %x-can0 %x\r\n",tempbms_cur,tempbms_vol);
+//		g_CanTransmitState.bmscandowntime=HAL_GetTick();
+//		bms_down_flag = 1;
+//	}
+//	else
+//	{
+//		if(HAL_GetTick()-g_CanTransmitState.bmscandowntime>=10000) // 10S 收不到640 数据 切换单机模式
+//		{
+//			bms_down_flag =0;
+//		}
+//	}
+	
+	if(McuCCSEvent)  // vcu XIA FA  DATA
+	{
+		McuCCSEvent=FALSE; //tempvcu_cur yizhi shi 0,daibiao dangqian changdian  dian liu
+		tempvcu_cur = (g_McuCCSOut.chargeCurtLimitH<<8)|g_McuCCSOut.chargeCurtLimitL;
+		tempvcu_vol_num = (g_McuCCSOut.chargeVolLimitH<<8) |g_McuCCSOut.chargeVolLimitL;
+		//LogPrintf("-vcu can cur %x - tempvcu_vol_num %x %x\r\n",tempvcu_cur,tempvcu_vol_num,g_UserSet.canid_cnt);
+		g_CanTransmitState.vcucandowntime=HAL_GetTick();
+		vcu_down_flag = 1;
+	}
+	else
+	{
+		if(HAL_GetTick()-g_CanTransmitState.vcucandowntime>=10000) // 10S 收不到640 数据 切换单机模式
+		{
+			vcu_down_flag =0;
 		}
 	}
 	
-	
-	if(BmsRtChangEvent)
-	{
-		BmsRtChangEvent=FALSE;
-		tempbms_cur = (g_Bms_Charge.chargeCurtLimitH<<8)|g_Bms_Charge.chargeCurtLimitL;
-		tempbms_vol = (g_Bms_Charge.chargeVolLimitH<<8)|g_Bms_Charge.chargeVolLimitL;	
-		
-		 LogPrintf("-1111can cur %x-can0 %x\r\n",tempbms_cur,tempbms_vol);
-	}
-	
-	if(McuCCSEvent)
-	{
-		McuCCSEvent=FALSE;
-		tempvcu_cur = (g_McuCCSOut.chargeCurtLimitH<<8)|g_McuCCSOut.chargeCurtLimitL;
-		tempvcu_vol = (g_McuCCSOut.chargeVolLimitH<<8) |g_McuCCSOut.chargeVolLimitL;
-	}
-	
 
-    g_CcsEnergyLimittime_count = g_UserSet.time*1000*60 ;
-	if (g_CcsEnergyLimittime > 0 &&  ((HAL_GetTick() - g_CcsEnergyLimittime) > (g_CcsEnergyLimittime_count)))  // 设置时间计算 分钟为单位- g_UserSet.time_blk
+	
+	GattSetBattVolt(tempbms_vol);
+
+
+	g_CcsEnergyLimittime_count = g_UserSet.time*1000*60 ;
+	
+	if (g_CcsEnergyLimittime_count > 0)
+	g_UserSet.onlinetime = g_UserSet.time - ((HAL_GetTick() - g_CcsEnergyLimittime)/60000); //剩余几分钟
+	
+	if (g_CcsEnergyLimittime_count > 0 &&  ((HAL_GetTick() - g_CcsEnergyLimittime) > (g_CcsEnergyLimittime_count)))  // 设置时间计算 分钟为单位- g_UserSet.time_blk
 	{
 		CcsEnergyLimitReached = 1;
 		g_CcsEnergyLimittime = 0;
+		g_UserSet.time =0;
+		chang_cur_lock1 =0;
+		chang_cur_lock2 =0;
+		g_UserSet.onlinetime =0;
+		GattSetData( LIST_CMD, CMD_SWCH, (uint8_t*)&g_UserSet.time);
 		printf("ID g_CcsEnergyLimittime TIME OVER  %d\r\n" ,g_UserSet.time );
 	}
 
 	bat_rcap = (g_BmsRtStatus3.RemainBatCapH<<8)|(g_BmsRtStatus3.RemainBatCapL);
 	
-	return ;
+	GattSetRmCap(bat_rcap);
+	
+	
+	bms_vol = (g_BmsCellVolt4.CellVoltage14H<<8)|g_BmsCellVolt4.CellVoltage14L;
+	if(bms_vol > 3000) bms_num =14;
+	bms_vol = (g_BmsCellVolt4.CellVoltage16H<<8)|g_BmsCellVolt4.CellVoltage16L;
+	if(bms_vol > 3000) bms_num =16;
+	bms_vol = (g_BmsCellVolt5.CellVoltage20H<<8)|g_BmsCellVolt5.CellVoltage20L;
+	if(bms_vol > 3000) bms_num =20;
+	bms_vol = (g_BmsCellVolt6.CellVoltage23H<<8)|g_BmsCellVolt6.CellVoltage23L;
+	if(bms_vol > 3000) bms_num =23;
+	bms_vol = (g_BmsCellVolt6.CellVoltage24H<<8)|g_BmsCellVolt6.CellVoltage24L;
+	if(bms_vol > 3000) bms_num =24;
+	
+	//if(bms_num == 0) bms_num=20;
+	
+//printf("ID energy_%d  %d\r\n" ,bms_vol ,(g_BmsCellVolt4.CellVoltage14H<<8)|g_BmsCellVolt4.CellVoltage14L );
+	
+
+	
+	bat_per_vol = tempbms_vol_act/bms_num*0.1;
+	if(bat_per_vol > 4.0)  bat_all_vol = 3.6 * bms_num;
+	else  bat_all_vol = 3.2 * bms_num;
+
+	bat_wh = bat_all_vol*bat_rcap;
+	GattSetAccuCyc( total_power/100 ); // gatt
+	
+//	if(HAL_GetTick()-g_CanTransmitState.t5000ms>=5000) // 分析CAN数据   tempbms_cur
+//  {
+//		LogPrintf("ID  %d   %f  %d - %d=  %f*  %d \r\n" ,tempbms_vol_act,bat_per_vol,bms_num,bat_wh,bat_all_vol,bat_rcap);
+//	}
+
+	if((bat_wh - bat_wh_blk >=1)&&(total_power_count ==2))
+	{
+		total_power += (bat_wh - bat_wh_blk);
+		bat_wh_blk = bat_wh;
+	}
+	
+// if((energy_mWh>0)&&(bat_wh - energy_mWh>= g_UserSet.lowbat*100))
+	
+	if((power_set_flag == 1)&&(total_power > (g_UserSet.lowbat*100)))
+	{
+		printf("ID energy_mWh POWER OVER  %d == %d\r\n" ,total_power,g_UserSet.lowbat*100);
+		power_set_flag =0;
+		energy_mWh = 0;
+		g_UserSet.lowbat_bak = 0;
+		g_UserSet.lowbat =0;
+		//total_power =0;
+		CcsEnergyLimitReached = 1;
+		chang_cur_lock1 =0;
+		chang_cur_lock2 =0;
+	  GattSetData( LIST_CMD, CMD_RAML, (uint8_t*)&g_UserSet.lowbat );	
+	}
+	
+	if((g_UserSet.time >0) ||(g_UserSet.lowbat > 0))  // shao ma  you xian
+  	vcu_down_flag =0;
+	
+	return;
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	#else
     if(HAL_GetTick()-g_CanTransmitState.t1000ms>=100)
@@ -895,6 +1279,8 @@ void CanProc(void)
 		temp16=(g_McuSysInfor2.MaxInputCurtSetH<<8)|g_McuSysInfor2.MaxInputCurtSetL;
 		GattSetData(LIST_DTA,DTA_CMXC,(uint8_t*)&temp16);
 	}
+	
+	
 
 //	if(BmsRtState1Event)
 //	{

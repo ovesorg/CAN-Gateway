@@ -86,7 +86,7 @@ void BmsProcess(void)
 		GattSetRmCap(g_bq40z50_state.Remaning_Capacity[1] << 8 | g_bq40z50_state.Remaning_Capacity[0] );//Remaining_Capacity
 		GattSetFullChrgeCap( g_bq40z50_state.Full_charge_Capacity[1] << 8 | g_bq40z50_state.Full_charge_Capacity[0]);//Full_Charge_Capacity
 		
-		GattSetAccuCyc( g_bq40z50_state.Cycle_Count[1] << 8 | g_bq40z50_state.Cycle_Count[0] );//Accu_Cycles
+		//GattSetAccuCyc( g_bq40z50_state.Cycle_Count[1] << 8 | g_bq40z50_state.Cycle_Count[0] );//Accu_Cycles
 		GattSetChargePower( 15000);//Charge_Power
 		
 		//GattSetAccuEnergy(g_bq40z50_state.a[1] << 8 | g_bq40z50_state.CV1[0] );//Accu_Energy_Output

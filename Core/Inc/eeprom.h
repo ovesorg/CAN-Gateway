@@ -21,10 +21,10 @@ typedef struct
 	NET_INFOR_TypeDef NetInforFactory;
 	uint8_t reportt_auto;// 0,manu,1 auto
 	uint8_t ble_state;
-	uint8_t lowbat;
+	uint16_t lowbat;
 	uint8_t demo_Cnt;
 	double tomd; 
-	uint32_t sleeptime;   //min
+	uint32_t lowbat_bak;   //min
 	uint32_t onlinetime;   //min
 	uint16_t canid_cnt;
 	uint16_t time;

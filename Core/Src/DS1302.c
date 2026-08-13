@@ -396,8 +396,10 @@ void Show_Time()
 //  memcpy(TimePrint_buf + n,  "", 1); n += 1;
   memcpy(TimePrint_buf + n,  " \r\n", 3); n += 3;
   
-//  Printf_Usart1(TimePrint_buf);
+ LogPrintf("key user log  %s©\r\n",TimePrint_buf);
 }
+
+
 void Rest_Ds1302()
 {
   Write_T.year   = 0x17;

@@ -33,7 +33,7 @@
 #define MEM_SIZE_SWCH    2
 #define MEM_SIZE_READ    32
 #define MEM_SIZE_RPTM    2
-#define MEM_SIZE_RAML    32
+#define MEM_SIZE_RAML    2
 
 #define MEM_SIZE_HBFQ    2
 
@@ -117,7 +117,7 @@
 #define MEM_SIZE_PCKC    2
 #define MEM_SIZE_RSOC    2
 #define MEM_SIZE_RCAP    2
-#define MEM_SIZE_FCCP    2
+#define MEM_SIZE_FCCP    4
 #define MEM_SIZE_PCKT    2
 #ifdef BMS_SUPPWR_SUPPORT
 #define MEM_SIZE_ACYC    2
@@ -1071,6 +1071,7 @@ enum
 typedef struct GATT_PARA
 {
 	//att
+	uint32_t  fccp;//Accu_Cycles 
 	uint8_t opid[20];
 	uint8_t ppid[32];
 	uint8_t rev[15];
@@ -1086,9 +1087,9 @@ typedef struct GATT_PARA
 	uint16_t rsoc;//Relative_SOC 
 	uint16_t rcap;//Remaining_Capacity 
 	
-	uint16_t fccp;//Full_Charge_Capacity 
+	uint16_t acyc;//Full_Charge_Capacity 
 	uint16_t rdbk;//Run_Days_Backup 
-	uint16_t acyc;//Accu_Cycles 
+	
 	uint16_t reserved0;// 
 	
 	uint8_t pubk[32];//PAYG_Security_Hash_Top
@@ -1242,7 +1243,7 @@ void GattSetRelativeSOC(uint16_t soc);//Relative_SOC
 void GattSetRmCap(uint16_t cap);//Remaining_Capacity
 void GattSetFullChrgeCap(uint16_t cap);//Full_Charge_Capacity
 void GattSetRunDayBackup(uint16_t day);//Run_Days_Backup
-void GattSetAccuCyc(uint16_t cyc);//Accu_Cycles
+void GattSetAccuCyc(uint32_t cyc);//Accu_Cycles
 void GattSetHashTop(uint8_t*hash,uint8_t size);//PAYG_Security_Hash_Top
 void GattSetGprsSleepTime(uint16_t time);//GPRS Sleep Time Period
 void GattSetGprsConnectTime(uint16_t time);//GPRS Connection Time Period

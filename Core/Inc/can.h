@@ -167,7 +167,7 @@ typedef struct
 
 typedef struct
 {
-
+/*
 	uint8_t PackOpenload:1;
 	uint8_t DischrgShortLoad:1;
 	uint8_t ChrgOverTempProtect:1;
@@ -187,13 +187,13 @@ typedef struct
 	uint8_t DischrgOverCurrentProtect:1;
 	uint8_t DischrgOverTempProtect:1;
 	uint8_t DischrgLowTempProtect:1;
-	
+	*/
 
-	uint8_t RealtimeCurrentH;
-	uint8_t RealtimeCurrentL;
+	uint8_t temp1;
+	uint8_t temp2;
 
-	uint8_t RealtimeVoltageH;
-	uint8_t RealtimeVoltageL;
+	uint8_t acinputh;
+	uint8_t acinputl;
 
 	uint8_t PackMaxTemp;
 	uint8_t PackMinTemp;
@@ -367,11 +367,12 @@ typedef struct
    //mV
 	uint8_t RatedCapH;
 	uint8_t RatedCapL;
+	uint8_t Reserved1[2];
 
 	uint8_t RatedVoltageH;
 	uint8_t RatedVoltageL;
 
-	uint8_t Reserved[4];
+	uint8_t Reserved[2];
 
 }BMS_SYSINFOR_TypeDef;
 
@@ -416,7 +417,8 @@ typedef struct
 	
 	uint32_t t1000ms;
 	uint32_t t2000ms;
-
+uint32_t bmscandowntime;
+	uint32_t vcucandowntime;
 	uint32_t t5000ms;
 	uint32_t t10ms;
 }CAN_TXSTATE_TypeDef;
@@ -480,7 +482,7 @@ enum
 #define McuSysInfor1Event     g_CanMcuEvent.BIT.B3
 #define McuSysInfor2Event     g_CanMcuEvent.BIT.B4
 #define McuCCSEvent     g_CanMcuEvent.BIT.B5
-
+#define BmsRtState1Event	g_CanMcuEvent.BIT.B6
 
 #define BmsRtChangEvent      g_CanBmsEvent.BIT.B0
 #define BmsRtState2Event     g_CanBmsEvent.BIT.B1
@@ -503,6 +505,10 @@ void CanProc(void);
 void CanBmsParse(uint32_t id,uint8_t *data,uint8_t len);
 void CanMcuParse(uint32_t id,uint8_t *data,uint8_t len);
 void CanTransmit(uint32_t id,uint8_t *data,uint8_t len);
+void CanBmsParse_bms(uint32_t id,uint8_t *data,uint8_t len); //bms
+uint32_t get_bat_rcap_mWh(void);
+void set_CcsEnergy_mWh(uint32_t value);
+uint8_t stop_changestaate(void);
 #ifdef CAN_TRASMITER_SUPPORT
 void Can0RxProc(can_receive_message_struct* rx_message);
 void Can1RxProc(can_receive_message_struct* rx_message);

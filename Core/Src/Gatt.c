@@ -219,7 +219,7 @@ const GATT1_Def  g_gatt1_list=
 		{"pckc",&g_GattMem[MEM_ADDR_PCKC],"Pack Current in mA",TYPE_INT},
 		{"rsoc",&g_GattMem[MEM_ADDR_RSOC],"Relative State of Charge",TYPE_UINT16},
 		{"rcap",&g_GattMem[MEM_ADDR_RCAP],"Remaining Capacity in Whs",TYPE_UINT16},
-		{"fccp",&g_GattMem[MEM_ADDR_FCCP],"Full Charge Capacity in Whs",TYPE_UINT16},
+		{"fccp",&g_GattMem[MEM_ADDR_FCCP],"Full Charge Capacity in Whs",TYPE_UINT32},
 		{"pckt",&g_GattMem[MEM_ADDR_PCKT],"Pack Temperature in Celsius",TYPE_INT},
 		#ifdef BMS_SUPPWR_SUPPORT
 		{"acyc",&g_GattMem[MEM_ADDR_ACYC],"Accumulated Cycles",TYPE_UINT16},
@@ -692,7 +692,7 @@ const GATT_Def  g_gatt_list=
 		{"sstc",&g_gatt_value.sstc," System Status Code",0,&g_gatt_meta_ctrl.sstc},
 		{"rsoc",&g_gatt_value.rsoc,"Relative State of Charge",0,&g_gatt_meta_ctrl.rsoc},
 		{"rcap",&g_gatt_value.rcap," Remaining Cpacity in Whs",0,&g_gatt_meta_ctrl.rcap},
-		{"fccp",&g_gatt_value.fccp," Full Charge Capacity in Whs",0,&g_gatt_meta_ctrl.fccp},
+		{"fccp",&g_gatt_value.rdbk," Full Charge Capacity in Whs",0,&g_gatt_meta_ctrl.rdbk},
 		{"rdbk",&g_gatt_value.rdbk," Run Days Backup",0,&g_gatt_meta_ctrl.rdbk},
 		{"acyc",&g_gatt_value.acyc," Accumulated Cycles",0,&g_gatt_meta_ctrl.acyc},
 		{"pubk",(uint16_t*)g_gatt_value.pubk," Public Key Hash Top",1,&g_gatt_meta_ctrl.pubk},
@@ -1120,7 +1120,7 @@ uint8_t* GattAllFieldJsonMerge(void)
 
 	GattSetGprsConnectFailCnt(0);
 	GattSetGprsConnectTime(g_UserSet.onlinetime);
-   	GattSetGprsSleepTime(g_UserSet.sleeptime);
+//   	GattSetGprsSleepTime(g_UserSet.sleeptime);
 	
 	for(i=0;i<LIST_COUNT;i++)
 	{
@@ -1215,7 +1215,7 @@ uint8_t* GattDtTypeFieldJsonMerge(uint8_t dt_type,uint8_t meta)
 
 	GattSetGprsConnectFailCnt(0);
 	GattSetGprsConnectTime(g_UserSet.onlinetime);
-   	GattSetGprsSleepTime(g_UserSet.sleeptime);
+  // 	GattSetGprsSleepTime(g_UserSet.sleeptime);
 
 	//json+=7;
 	json+=strlen((char*)json);
@@ -1321,7 +1321,7 @@ uint8_t* GattSingleFieldMerge(uint8_t *tag_str)
 
 	GattSetGprsConnectFailCnt(0);
 	GattSetGprsConnectTime(g_UserSet.onlinetime);
-   	GattSetGprsSleepTime(g_UserSet.sleeptime);
+  // 	GattSetGprsSleepTime(g_UserSet.sleeptime);
 
 	json=g_pub_json;
 
@@ -1432,7 +1432,7 @@ uint8_t* GattMultiFieldMerge(void)
 
 	GattSetGprsConnectFailCnt(0);
 	GattSetGprsConnectTime(g_UserSet.onlinetime);
-   	GattSetGprsSleepTime(g_UserSet.sleeptime);
+  // 	GattSetGprsSleepTime(g_UserSet.sleeptime);
 
 	json=g_pub_json;
 
@@ -1765,10 +1765,10 @@ void GattSetRunDayBackup(uint16_t day)//Run_Days_Backup
 	//GattSetData( LIST_DTA, DTA_r, (uint16_t*)&day);
 }
 
-void GattSetAccuCyc(uint16_t cyc)//Accu_Cycles
+void GattSetAccuCyc(uint32_t cyc)//Accu_Cycles
 {
-	g_gatt_value.acyc=cyc;
-	//GattSetData( LIST_DTA, DTA_FCCP, (uint8_t*)&cap);
+	g_gatt_value.fccp=cyc;
+	GattSetData( LIST_DTA, DTA_FCCP, (uint8_t*)&g_gatt_value.fccp);
 }
 	
 void GattSetHashTop(uint8_t*hash,uint8_t size)//PAYG_Security_Hash_Top

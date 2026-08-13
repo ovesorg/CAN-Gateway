@@ -155,12 +155,21 @@ OF SUCH DAMAGE.
 #include "lcd128x64.h"
 #endif
 
-#define DS_SCLK_Pin GPIO_PIN_13
-#define DS_SCLK_GPIO_Port GPIOC
-#define DS_IO_Pin GPIO_PIN_14
-#define DS_IO_GPIO_Port GPIOC
-#define DS_CE_Pin GPIO_PIN_15
-#define DS_CE_GPIO_Port GPIOC
+#define DS_SCLK_Pin GPIO_PIN_5
+#define DS_SCLK_GPIO_Port GPIOA
+#define DS_IO_Pin GPIO_PIN_6
+#define DS_IO_GPIO_Port GPIOA
+#define DS_CE_Pin GPIO_PIN_7
+#define DS_CE_GPIO_Port GPIOA
+
+//#define DS_SCLK_Pin GPIO_PIN_13
+//#define DS_SCLK_GPIO_Port GPIOC
+//#define DS_IO_Pin GPIO_PIN_14
+//#define DS_IO_GPIO_Port GPIOC
+//#define DS_CE_Pin GPIO_PIN_15
+//#define DS_CE_GPIO_Port GPIOC
+
+
 #define GSM_EN_Pin GPIO_PIN_0
 #define GSM_EN_GPIO_Port GPIOA
 #define GSM_RST_Pin GPIO_PIN_1
@@ -180,16 +189,18 @@ OF SUCH DAMAGE.
 #define CAN_STB_GPIO_Port GPIOC
 
 #ifdef LCD128X64_SUPPORT
-#define LCD_CS_Pin GPIO_PIN_4
-#define LCD_CS_GPIO_Port GPIOA
-#define LCD_CLK_Pin GPIO_PIN_7
-#define LCD_CLK_GPIO_Port GPIOA
-#define LCD_DAT_Pin GPIO_PIN_6
-#define LCD_DAT_GPIO_Port GPIOA
+//#define LCD_CS_Pin GPIO_PIN_4
+//#define LCD_CS_GPIO_Port GPIOA
+//#define LCD_CLK_Pin GPIO_PIN_7
+//#define LCD_CLK_GPIO_Port GPIOA
+//#define LCD_DAT_Pin GPIO_PIN_6
+//#define LCD_DAT_GPIO_Port GPIOA
 
-#define BL_CTRL_Pin GPIO_PIN_4
-#define BL_CTRL_GPIO_Port GPIOC
+//#define BL_CTRL_Pin GPIO_PIN_4
+//#define BL_CTRL_GPIO_Port GPIOC
 #else
+
+
 #define SYSLED_Pin GPIO_PIN_4
 #define SYSLED_GPIO_Port GPIOA
 
@@ -198,8 +209,8 @@ OF SUCH DAMAGE.
 #define CAN2LED_Pin GPIO_PIN_10
 #define CAN2LED_GPIO_Port GPIOB
 
-#define BL_CTRL_Pin GPIO_PIN_6
-#define BL_CTRL_GPIO_Port GPIOA
+//#define BL_CTRL_Pin GPIO_PIN_6
+//#define BL_CTRL_GPIO_Port GPIOA
 #endif
 #define BLE_RESET_Pin GPIO_PIN_1
 #define BLE_RESET_GPIO_Port GPIOB
@@ -219,29 +230,29 @@ OF SUCH DAMAGE.
 #define PWR_CTRL_GPIO_Port GPIOB
 #define UART_SEL_Pin GPIO_PIN_11
 #define UART_SEL_GPIO_Port GPIOA
-#define KEY_ENTER_Pin GPIO_PIN_15
-#define KEY_ENTER_GPIO_Port GPIOA
-#define KEY_UP_Pin GPIO_PIN_3
-#define KEY_UP_GPIO_Port GPIOB
-#define KEY_DOWN_Pin GPIO_PIN_4
-#define KEY_DOWN_GPIO_Port GPIOB
-#define LCD_CSB5_Pin GPIO_PIN_5
-#define LCD_CSB5_GPIO_Port GPIOB
-#define LCD_CLKB8_Pin GPIO_PIN_8
-#define LCD_CLKB8_GPIO_Port GPIOB
-#define LCD_DATB9_Pin GPIO_PIN_9
-#define LCD_DATB9_GPIO_Port GPIOB
+//#define KEY_ENTER_Pin GPIO_PIN_15
+//#define KEY_ENTER_GPIO_Port GPIOA
+//#define KEY_UP_Pin GPIO_PIN_3
+//#define KEY_UP_GPIO_Port GPIOB
+//#define KEY_DOWN_Pin GPIO_PIN_4
+//#define KEY_DOWN_GPIO_Port GPIOB
+//#define LCD_CSB5_Pin GPIO_PIN_5
+//#define LCD_CSB5_GPIO_Port GPIOB
+//#define LCD_CLKB8_Pin GPIO_PIN_8
+//#define LCD_CLKB8_GPIO_Port GPIOB
+//#define LCD_DATB9_Pin GPIO_PIN_9
+//#define LCD_DATB9_GPIO_Port GPIOB
 
 #define RELAY_EN_Pin GPIO_PIN_1
 #define RELAY_EN_GPIO_Port GPIOA
 
 #ifdef LCD128X64_SUPPORT
-#define LCD_RST_Pin GPIO_PIN_2
-#define LCD_RST_GPIO_Port GPIOC
-#define LCD_PWR_Pin GPIO_PIN_3
-#define LCD_PWR_GPIO_Port GPIOC
-#define LCD_RS_Pin GPIO_PIN_5
-#define LCD_RS_GPIO_Port GPIOA
+//#define LCD_RST_Pin GPIO_PIN_2
+//#define LCD_RST_GPIO_Port GPIOC
+//#define LCD_PWR_Pin GPIO_PIN_3
+//#define LCD_PWR_GPIO_Port GPIOC
+//#define LCD_RS_Pin GPIO_PIN_5
+//#define LCD_RS_GPIO_Port GPIOA
 #endif
 
 #ifdef CAN_TRASMITER_SUPPORT
@@ -252,17 +263,17 @@ OF SUCH DAMAGE.
 #define CAN2_STB_Pin GPIO_PIN_1
 #define CAN2_STB_GPIO_Port GPIOB
 
-#define CAN_ADDR0_Pin GPIO_PIN_7
-#define CAN_ADDR0_GPIO_Port GPIOA
+//#define CAN_ADDR0_Pin GPIO_PIN_7
+//#define CAN_ADDR0_GPIO_Port GPIOA
 
-#define CAN_ADDR1_Pin GPIO_PIN_6
-#define CAN_ADDR1_GPIO_Port GPIOA
+//#define CAN_ADDR1_Pin GPIO_PIN_6
+//#define CAN_ADDR1_GPIO_Port GPIOA
 
-#define CAN_ADDR2_Pin GPIO_PIN_5
-#define CAN_ADDR2_GPIO_Port GPIOA
+//#define CAN_ADDR2_Pin GPIO_PIN_5
+//#define CAN_ADDR2_GPIO_Port GPIOA
 
-#define CAN_ADDR3_Pin GPIO_PIN_4
-#define CAN_ADDR3_GPIO_Port GPIOA
+//#define CAN_ADDR3_Pin GPIO_PIN_4
+//#define CAN_ADDR3_GPIO_Port GPIOA
 
 
 

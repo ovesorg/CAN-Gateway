@@ -148,7 +148,7 @@ void SysPowerOff(void)
 		 {
 			 LcdClearAll();
 			 LcdUpdateAll();
-			 HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_RESET);
+			// HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_RESET);
 			 HAL_GPIO_WritePin(GSM_EN_GPIO_Port, GSM_EN_Pin, GPIO_PIN_RESET); 
 
 			 CoulomSleep();
@@ -576,7 +576,7 @@ uint8_t  CoulomCmdParse(uint8_t*buffer)
 			g_bq40z50_state.Cycle_Count[1] =(temp32>>8)&0x00ff;
 			g_bq40z50_state.Cycle_Count[0]=temp32&0x00ff;
 
-			GattSetAccuCyc( g_bq40z50_state.Cycle_Count[1] << 8 | g_bq40z50_state.Cycle_Count[0] );
+		//	GattSetAccuCyc( g_bq40z50_state.Cycle_Count[1] << 8 | g_bq40z50_state.Cycle_Count[0] );
 
 			temp32=NORMAL_CAPACITY*1.11628f;
 			g_bq40z50_state.Full_charge_Capacity[1]=temp32>>8;

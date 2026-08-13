@@ -569,6 +569,8 @@ void PaygOvesInput(void)
 	    {   
 			g_sysStateCode.error.pswd_error=1;
 	    	}
+			
+				    LogPrintf("key user‐r\n");
   }
   else//新密码
   {
@@ -591,7 +593,7 @@ void PaygOvesInput(void)
 	
     if(Top_UpDays > 0)//充值密码正确
     {	
-		//     Printf_Usart1("当前密码充值天数:%d  （天）\r\n",z);
+    LogPrintf(" Top_UpDays :%d  （天）\r\n",z);
 		payg.hast_otp[0] = hast_top_tmp[0];
 		payg.hast_otp[1] = hast_top_tmp[1];
 		//SaveFlash_Flag = 1;//需要更新FLASH
@@ -743,10 +745,10 @@ void PaygProcess(void)
 			tian = GetDs1302Day();
 		}
 
-	#ifdef   SHOW_TIME
-		Show_Time();
-	#endif 
-		
+//	#ifdef   SHOW_TIME
+	//	Show_Time();
+//	#endif 
+	
 		PaygOvesTask();
 	
 		#ifndef BMS_CAMP_SUPPORT
@@ -780,6 +782,9 @@ void PaygProcess(void)
 		//GattSetSolarGeneration( payg.hast_otp[1]);//Solar Generation
 		#endif
 
+		
+		//LogPrintf("-paygo %d %d- %d %d\r\n",payg.remaing_days , payg.days_has_been_runing,g_sysStateCode.statecode,payg.recharge_days);
+	
 //		GattSetHeartbeat(g_UserSet.heartbeat);
 //		GattSetReportMode(g_UserSet.reportt_auto?0:1);
 

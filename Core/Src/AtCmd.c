@@ -1042,20 +1042,20 @@ void AtCmdTokenParse(uint8_t*str,uint8_t*tag)
 	memset(token,0x00,32);
 
 	token[13] = 0xc5;
-        token[14] = 0x6a;
-        token[15] = 0x29;
-        token[16] = 0x0e;
-        token[17] = 0xfa;
+	token[14] = 0x6a;
+	token[15] = 0x29;
+	token[16] = 0x0e;
+	token[17] = 0xfa;
 
-        token[21]= token_lo>>24;
-        token[20]= token_lo>>16;
-        token[19]= token_lo>>8;
-        token[18]= token_lo;
-        
-        token[25]= token_hi>>24;
-        token[24]= token_hi>>16;
-        token[23]= token_hi>>8;
-        token[22]= token_hi;
+	token[21]= token_lo>>24;
+	token[20]= token_lo>>16;
+	token[19]= token_lo>>8;
+	token[18]= token_lo;
+	
+	token[25]= token_hi>>24;
+	token[24]= token_hi>>16;
+	token[23]= token_hi>>8;
+	token[22]= token_hi;
 		
 	#ifdef CAMP_PROJECT	
 	token[26]= CRC8(token + 13 ,13);	
@@ -1095,7 +1095,7 @@ void AtCmdTokenParse(uint8_t*str,uint8_t*tag)
 	return ;
 	#endif
 
-	p=&token[13] ;
+				p=&token[13] ;
 
         temp[3] = p[12];
         temp[2] = p[11];
@@ -1820,17 +1820,17 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 			p=strstr(p_buf,"/cmd/gstw/");  //sleep
 			if(p!=NULL)
 			{
-				g_UserSet.sleeptime=atoi(p+10);
+				//g_UserSet.sleeptime=atoi(p+10);
 				AtSetTopicId(/*"/cmd/gstw"*/NULL);
 
-				if(g_UserSet.sleeptime>720)
-				{	g_UserSet.sleeptime=720;
-					//GattSetUplinkData("720");
-					}
+//				if(g_UserSet.sleeptime>720)
+//				{	g_UserSet.sleeptime=720;
+//					//GattSetUplinkData("720");
+//					}
 				//else
 					//GattSetUplinkData(p+10);
 				memset(tempBuff,0x00,128);
-				sprintf((char*)tempBuff,"\"gstw\":\"%d\"",g_UserSet.sleeptime);
+			//	sprintf((char*)tempBuff,"\"gstw\":\"%d\"",g_UserSet.sleeptime);
 				GattSetCmdUplinkData(tempBuff);
 				
 				MqttSetRequest(MQTT_REQ_CMD);
@@ -2405,27 +2405,27 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 			 {
 			 	tempInt16=atoi(p+6);
 
-				if(tempInt16>0&&tempInt16<720)
-					g_UserSet.sleeptime=tempInt16;
+//				if(tempInt16>0&&tempInt16<720)
+//					g_UserSet.sleeptime=tempInt16;
 
 				/*if(g_UserSet.sleeptime>720)
 				{	g_UserSet.sleeptime=720;
 					}*/
 				memset(tempBuff,0x00,128);
-				sprintf((char*)tempBuff,"\"gstw\":%d",g_UserSet.sleeptime);
+//				sprintf((char*)tempBuff,"\"gstw\":%d",g_UserSet.sleeptime);
 				GattSetCmdUplinkData(tempBuff);
 				
 				MqttSetRequest(MQTT_REQ_CMD);
 				EEpUpdateEnable();
-			 	}
+			}
 
 			p=strstr(p_buf,"gctw\":");
 			if(p!=NULL)
 			 {
 			 	
 				tempInt16=atoi(p+6);
-				if(tempInt16>0&&tempInt16<g_UserSet.sleeptime)
-					g_UserSet.onlinetime=tempInt16;
+//				if(tempInt16>0&&tempInt16<g_UserSet.sleeptime)
+//					g_UserSet.onlinetime=tempInt16;
 				
 				memset(tempBuff,0x00,128);
 				sprintf((char*)tempBuff,"\"gctw\":%d",g_UserSet.onlinetime);

@@ -102,7 +102,7 @@ int main(void)
 	
 	__enable_irq();
 	GpioInit();
-
+systick_config();
 	/* configure I2C */
 //   i2c_config();
 
@@ -113,20 +113,20 @@ int main(void)
 	//Uart5Init(); //UART
     //Sif_Init();
 	 /* initialize EEPROM  */
-   i2c_eeprom_init();
+  // i2c_eeprom_init();
 
-	#ifdef WDG_ENABLE
-	/* confiure FWDGT counter clock: 40KHz(IRC40K) / 64 = 0.625 KHz */
-    fwdgt_config(5*2* 5000, FWDGT_PSC_DIV256);
-    /* after 1.6 seconds to generate a reset */
-    fwdgt_enable();
-	#endif
+//	#ifdef WDG_ENABLE
+//	/* confiure FWDGT counter clock: 40KHz(IRC40K) / 64 = 0.625 KHz */
+//    fwdgt_config(5*2* 5000, FWDGT_PSC_DIV256);
+//    /* after 1.6 seconds to generate a reset */
+//    fwdgt_enable();
+//	#endif
 
-	systick_config();
+	
 	EEpInit();
 
-    TimerInit();
-    CanInit();
+	TimerInit();
+	CanInit();
     
 #ifdef CAN_TRASMITER_SUPPORT
 	CanRamInit();
@@ -168,15 +168,16 @@ int main(void)
 
 	 HAL_Delay(200);
     /* configure CKOUT0 to output system clock */
-    rcu_ckout0_config(RCU_CKOUT0SRC_CKSYS);
+   rcu_ckout0_config(RCU_CKOUT0SRC_CKSYS);
 
-  
-    while(1)
+ //Rest_Ds1302();
+ 
+  while(1)
 	{
 				/* USER CODE END WHILE */
-	  	#ifdef WDG_ENABLE		//HAL_IWDG_Refresh(&hiwdg);
-		fwdgt_counter_reload();
-		#endif
+//	  	#ifdef WDG_ENABLE		//HAL_IWDG_Refresh(&hiwdg);
+//		fwdgt_counter_reload();
+//		#endif
 
 		CanProc();
 		BleCmdProc();
@@ -211,14 +212,15 @@ void GpioInit(void)
 	rcu_periph_clock_enable(RCU_GPIOB);
 	rcu_periph_clock_enable(RCU_GPIOC);
 	rcu_periph_clock_enable(RCU_GPIOD);
-	
-	gpio_init(DS_SCLK_GPIO_Port, GPIO_MODE_OUT_OD, GPIO_OSPEED_10MHZ, DS_SCLK_Pin);
-	gpio_init(DS_IO_GPIO_Port, GPIO_MODE_OUT_OD, GPIO_OSPEED_10MHZ, DS_IO_Pin);
-	gpio_init(DS_CE_GPIO_Port, GPIO_MODE_OUT_OD, GPIO_OSPEED_10MHZ, DS_CE_Pin);
+		rcu_periph_clock_enable(RCU_AF);
 
-	gpio_init(GSM_EN_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_EN_Pin);
-	gpio_init(GSM_RST_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_RST_Pin);
-	gpio_init(GSM_PWR_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_PWR_Pin);
+	gpio_pin_remap_config(GPIO_SWJ_SWDPENABLE_REMAP,ENABLE);
+	
+
+
+//	gpio_init(GSM_EN_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_EN_Pin);
+//	gpio_init(GSM_RST_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_RST_Pin);
+//	gpio_init(GSM_PWR_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GSM_PWR_Pin);
 
 	gpio_init(CAN_INH_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN_INH_Pin);
 	gpio_init(CAN_EN_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN_EN_Pin);
@@ -232,7 +234,7 @@ void GpioInit(void)
 //	gpio_init(LCD_CLK_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_CLK_Pin);
 //	gpio_init(LCD_DAT_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_DAT_Pin);
 
-	gpio_init(BL_CTRL_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, BL_CTRL_Pin);
+	//gpio_init(BL_CTRL_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, BL_CTRL_Pin);
  
 	gpio_init(SYSLED_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, SYSLED_Pin);
 	gpio_init(CAN1LED_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN1LED_Pin);
@@ -242,13 +244,13 @@ void GpioInit(void)
 	gpio_init(CAN_STB_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN_STB_Pin);
 	
 
-	#ifdef LCD128X64_SUPPORT
-	gpio_init(LCD_RST_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_RST_Pin);
-	gpio_init(LCD_PWR_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_PWR_Pin);
-	gpio_init(LCD_RS_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_RS_Pin);
+//	#ifdef LCD128X64_SUPPORT
+//	gpio_init(LCD_RST_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_RST_Pin);
+//	gpio_init(LCD_PWR_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_PWR_Pin);
+//	gpio_init(LCD_RS_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, LCD_RS_Pin);
 
-	HAL_GPIO_WritePin(LCD_PWR_GPIO_Port,LCD_PWR_Pin,SET);
-	#endif
+//	HAL_GPIO_WritePin(LCD_PWR_GPIO_Port,LCD_PWR_Pin,SET);
+//	#endif
 
 	HAL_GPIO_WritePin(CAN_STB_GPIO_Port,CAN_STB_Pin,RESET);
 
@@ -263,8 +265,8 @@ void GpioInit(void)
 
 	//HAL_GPIO_WritePin(GPS_PWR_GPIO_Port, GPS_PWR_Pin, GPIO_PIN_SET);
 
-	gpio_init(PWR_KEY_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, PWR_KEY_Pin);
-	gpio_init(KEY_ENTER_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, KEY_ENTER_Pin);
+//	gpio_init(PWR_KEY_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, PWR_KEY_Pin);
+//	gpio_init(KEY_ENTER_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, KEY_ENTER_Pin);
 
 	gpio_init(SW_A_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, SW_A_Pin);
 	gpio_init(SW_B_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, SW_B_Pin);
@@ -277,10 +279,10 @@ void GpioInit(void)
 
 	
     #ifdef CAN_TRASMITER_SUPPORT
-	gpio_init(CAN_ADDR0_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR0_Pin);
-	gpio_init(CAN_ADDR1_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR1_Pin);
-	gpio_init(CAN_ADDR2_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR2_Pin);
-	gpio_init(CAN_ADDR3_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR3_Pin);
+//	gpio_init(CAN_ADDR0_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR0_Pin);
+//	gpio_init(CAN_ADDR1_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR1_Pin);
+//	gpio_init(CAN_ADDR2_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR2_Pin);
+//	gpio_init(CAN_ADDR3_GPIO_Port, GPIO_MODE_IPU, GPIO_OSPEED_10MHZ, CAN_ADDR3_Pin);
 	
 	gpio_init(CAN1_STB_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN1_STB_Pin);
 	gpio_init(CAN2_STB_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, CAN2_STB_Pin);
@@ -288,8 +290,10 @@ void GpioInit(void)
 	HAL_GPIO_WritePin(CAN1_STB_GPIO_Port,CAN1_STB_Pin,RESET);
 	HAL_GPIO_WritePin(CAN2_STB_GPIO_Port,CAN2_STB_Pin,RESET);
 	#endif
-	ExtiInit();
-
+//	ExtiInit();
+	gpio_init(DS_SCLK_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, DS_SCLK_Pin);
+	gpio_init(DS_IO_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, DS_IO_Pin);
+	gpio_init(DS_CE_GPIO_Port, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, DS_CE_Pin);
 	
 }
 
@@ -391,7 +395,7 @@ void Uart4Init(void) //GPS
     /* connect port to USARTx_Rx */
     gpio_init(GPIOC, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_11);
 
-    UartConfig(UART3,9600u);
+    UartConfig(UART3,115200u);
 
 }
 
@@ -669,7 +673,7 @@ int fputc(int ch, FILE *f)
 {
 	extern USER_SET_TypeDef g_UserSet;
 	
-	if(g_UserSet.log)
+//	if(g_UserSet.log)
 	{
 	    usart_data_transmit(UART3, (uint8_t)ch);
 	    while(RESET == usart_flag_get(UART3, USART_FLAG_TBE));

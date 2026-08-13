@@ -62,7 +62,7 @@ void EEpInit(void)
 
 			g_UserSet.reportt_auto=TRUE;
 			g_UserSet.ble_state=5; 
-			g_UserSet.sleeptime=5; 
+//			g_UserSet.sleeptime=5; 
 			g_UserSet.onlinetime=2; 
 			g_UserSet.heartbeat=1; 
 			g_UserSet.wakeup_cnt=0; 
@@ -176,10 +176,10 @@ uint32_t EEpGetTransFreq(void)
 uint32_t EEpGetSleepTime(void)
 {
 	#if defined(UI1K_V13_PROJECT)||defined(E_MOB48V_PROJECT)||defined(P10KW_PROJECT)
-	if(g_UserSet.sleeptime)
-		return g_UserSet.sleeptime*60*1000;
-	else
-		return ( 5*60*1000);
+//	if(g_UserSet.sleeptime)
+//		return g_UserSet.sleeptime*60*1000;
+//	else
+//		return ( 5*60*1000);
 	#else
 	if(g_UserSet.sleeptime>g_UserSet.onlinetime)
 		return ( (g_UserSet.sleeptime-g_UserSet.onlinetime)*60);

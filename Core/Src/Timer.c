@@ -441,7 +441,7 @@ void TimeBacklightCallback(TIMER_TypeDef *p)
 {
 	p->enable=FALSE;
 	#ifndef DC_PUMP_SUPPORT
-	HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_RESET);
+//	HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_RESET);
 	#endif
 
 	MenuSaverSet(TRUE);
@@ -510,7 +510,7 @@ void TimeBacklightSet(void)
 	g_Backlight_timer.count=30000;
 	#else
 	g_Backlight_timer.count=60000;
-	HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(BL_CTRL_GPIO_Port, BL_CTRL_Pin, GPIO_PIN_SET);
 	#endif
 	MenuSaverSet(FALSE);
 
@@ -552,8 +552,7 @@ void  TimerSleepSet(void)
 void  TimerSet(uint8_t timer,uint32_t count)
 {
 	uint8_t i=0;
-	
-    for(i=0;i<TIMER_COUNT;i++)
+  for(i=0;i<TIMER_COUNT;i++)
 	{	
 		if(g_Timer[i].timer_id==timer)
 		{
@@ -562,9 +561,8 @@ void  TimerSet(uint8_t timer,uint32_t count)
 			g_Timer[i].p->event=FALSE;
 
 			break;
-			}
-        }
-
+		}
+   }
 }
 
 void  TimerEventClear(uint8_t timer)
