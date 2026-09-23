@@ -593,11 +593,12 @@ void PaygOvesInput(void)
 	
     if(Top_UpDays > 0)//充值密码正确
     {	
-    LogPrintf(" Top_UpDays :%d  （天）\r\n",z);
+    LogPrintf(" Top_UpDays :%d   day‐r\n",z);
 		payg.hast_otp[0] = hast_top_tmp[0];
 		payg.hast_otp[1] = hast_top_tmp[1];
 		//SaveFlash_Flag = 1;//需要更新FLASH
 		EEpUpdateEnable();
+		clear_pag_watchwdg();
 
 		if(Top_UpDays >= 2192) 
 			Top_UpDays = 2192;

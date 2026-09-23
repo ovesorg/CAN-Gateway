@@ -3,7 +3,7 @@
 #define __PAYG_H__
 
 
-#define GATT_VERSON  "BOX_6.0.1"
+#define GATT_VERSON  "BOX_6.0.4"
 #define HASH_MAX        3287
 
 #define YES 0xA5D2635A

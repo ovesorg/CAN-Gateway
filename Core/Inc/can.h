@@ -112,11 +112,21 @@ typedef struct
 	uint8_t chargeVolLimitL;
 	uint8_t chargeCurtLimitH;
 	uint8_t chargeCurtLimitL;
-	
+	uint8_t resed;
 	 
 	
-	uint8_t reseved1[4];
+	uint8_t reseved1[3];
 }MCUCCS_TypeDef;
+
+
+typedef struct
+{
+	uint8_t chargeVolLimitH;
+	uint8_t chargeVolLimitL;
+	uint8_t chargeCurtLimitH;
+	uint8_t chargeCurtLimitL;
+	uint8_t reseved1[4];
+}MCUCCS_VCUAP_TypeDef;
 
 typedef struct
 {

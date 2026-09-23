@@ -1919,63 +1919,8 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 				//GattSetUplinkData(p);
 
 				EEpUpdateEnable();
-				}
+			}
 
-			p=strstr(p_buf,"/cmd/updt/"); 
-			if(p!=NULL)
-			{
-				AtSetTopicId(/*"/cmd/updt"*/NULL);
-				memset(tempBuff,0x00,128);
-				if(strstr(p,"\"auto\"")!=NULL)
-				{	g_UserSet.reportt_auto=1;
-					//GattSetUplinkData("auto");
-					sprintf((char*)tempBuff,"\"updt\":\"%s\"","auto");
-					}
-				else if(strstr(p,"\"manu\"")!=NULL)
-				{	g_UserSet.reportt_auto=0;
-					//GattSetUplinkData("manu");
-					sprintf((char*)tempBuff,"\"updt\":\"%s\"","manu");
-					}
-				else
-				{
-					//GattSetUplinkData("error cmd");
-					sprintf((char*)tempBuff,"\"updt\":\"%s\"","error cmd");
-					}
-
-				
-				GattSetCmdUplinkData(tempBuff);
-				
-				MqttSetRequest(MQTT_REQ_CMD);
-				EEpUpdateEnable();
-				}
-			p=strstr(p_buf,"/cmd/rptm/"); 
-			if(p!=NULL)
-			{
-				AtSetTopicId(/*"/cmd/rptm"*/NULL);
-
-				memset(tempBuff,0x00,128);
-
-				if(strstr(p,"0")!=NULL)
-				{	g_UserSet.reportt_auto=1;
-					//GattSetUplinkData("\"mode 0\"");
-					sprintf((char*)tempBuff,"\"rptm\":\"%d\"",0);
-					}
-				else if(strstr(p,"1")!=NULL)
-				{	g_UserSet.reportt_auto=0;
-					//GattSetUplinkData("\"mode 1\"");
-					sprintf((char*)tempBuff,"\"rptm\":\"%d\"",1);
-					}
-				else
-				{
-					sprintf((char*)tempBuff,"\"rptm\":\"%s\"","error");
-					}
-				
-				
-				GattSetCmdUplinkData(tempBuff);
-				
-				MqttSetRequest(MQTT_REQ_CMD);
-				EEpUpdateEnable();
-				}
 
 			p=strstr(p_buf,"/cmd/hbfq/");  //hbfq
 			if(p!=NULL)
@@ -2472,10 +2417,10 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 			 	}
 			p=strstr(p_buf,"swch\":\"");
 			if(p!=NULL)
-			 {
+			{
 			 	memset(tempBuff,0x00,128);
 				
-				 if(strstr(p,"\"on\"")!=NULL)
+				if(strstr(p,"\"on\"")!=NULL)
 				{	
 					sprintf((char*)tempBuff,"\"swch\":\"on\"");
 					#ifdef DC_PUMP_SUPPORT
@@ -2486,7 +2431,7 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 					HAL_Delay(50);
 					PumpTxCmd(PUMP_ON);
 					#endif
-					}
+				}
 				else if(strstr(p,"\"off\"")!=NULL)
 				{	
 					sprintf((char*)tempBuff,"\"swch\":\"off\"");
@@ -2496,50 +2441,49 @@ void AtCmdPaser(uint8_t *buffer,uint8_t cmd)
 					#else
 					PumpTxCmd(PUMP_OFF);
 					#endif
-					}
+				}
 				else
 				{
 					sprintf((char*)tempBuff,"\"swch\":\"error\"");
-					}
+				}
 				GattSetUplinkData(tempBuff);
 				MqttSetRequest(MQTT_REQ_CMD);
-			 	}
+			}
 			p=strstr(p_buf,"read\":\"");
 			if(p!=NULL)
-			 {
+			{
 				memset(tempBuff,0x00,128);
-
 				memcpy(tempBuff,p,strlen(p));
-				
 			 	GattSetCmdUplinkData(tempBuff);
-				
 				MqttSetRequest(MQTT_REQ_CMD);
 				EEpUpdateEnable();
-			 	}
-			p=strstr(p_buf,"rptm\":");
-			if(p!=NULL)
-			 {
-				memset(tempBuff,0x00,128);
+			}
+			
+//			p=strstr(p_buf,"rptm\":");
+//			if(p!=NULL)
+//			 {
+//				memset(tempBuff,0x00,128);
 
-				if(strstr(p,":0")!=NULL)
-				{	g_UserSet.reportt_auto=1;
-					sprintf((char*)tempBuff,"\"rptm\":%d",0);
-					}
-				else if(strstr(p,":1")!=NULL)
-				{	g_UserSet.reportt_auto=0;
-					sprintf((char*)tempBuff,"\"rptm\":%d",1);
-					}
-				else
-				{
-					sprintf((char*)tempBuff,"\"rptm\":\"%s\"","error");
-					}
-				
-				
-				GattSetCmdUplinkData(tempBuff);
-				
-				MqttSetRequest(MQTT_REQ_CMD);
-				EEpUpdateEnable();
-			 	}
+//				if(strstr(p,":0")!=NULL)
+//				{	g_UserSet.reportt_auto=1;
+//					sprintf((char*)tempBuff,"\"rptm\":%d",0);
+//					}
+//				else if(strstr(p,":1")!=NULL)
+//				{	g_UserSet.reportt_auto=0;
+//					sprintf((char*)tempBuff,"\"rptm\":%d",1);
+//					}
+//				else
+//				{
+//					sprintf((char*)tempBuff,"\"rptm\":\"%s\"","error");
+//					}
+//				
+//				
+//				GattSetCmdUplinkData(tempBuff);
+//				
+//				MqttSetRequest(MQTT_REQ_CMD);
+//				EEpUpdateEnable();
+//			 	}
+
 			p=strstr(p_buf,"hbfq\":");
 			if(p!=NULL)
 			 {
